@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { EditorialIntro } from "@/components/editorial-intro";
 
@@ -12,6 +13,9 @@ export function HomeOpening() {
   const copyRef = useRef<HTMLDivElement>(null);
   const cueRef = useRef<HTMLButtonElement>(null);
   const introRef = useRef<HTMLDivElement>(null);
+  const storyRef = useRef<HTMLDivElement>(null);
+  const layersRef = useRef<HTMLDivElement>(null);
+  const lineOverlayRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,8 +36,22 @@ export function HomeOpening() {
       const copy = copyRef.current;
       const cue = cueRef.current;
       const intro = introRef.current;
+      const story = storyRef.current;
+      const layers = layersRef.current;
+      const lineOverlay = lineOverlayRef.current;
 
-      if (!track || !stage || !card || !media || !copy || !cue || !intro) {
+      if (
+        !track ||
+        !stage ||
+        !card ||
+        !media ||
+        !copy ||
+        !cue ||
+        !intro ||
+        !story ||
+        !layers ||
+        !lineOverlay
+      ) {
         return;
       }
 
@@ -66,6 +84,18 @@ export function HomeOpening() {
           autoAlpha: 0,
           y: 36,
         });
+        gsap.set(story, {
+          autoAlpha: 0,
+          y: 32,
+        });
+        gsap.set(layers, {
+          autoAlpha: 0,
+          scale: 0.9,
+          transformOrigin: "50% 50%",
+        });
+        gsap.set(lineOverlay, {
+          autoAlpha: 0,
+        });
 
         const timeline = gsap.timeline({
           defaults: { ease: "none" },
@@ -79,7 +109,11 @@ export function HomeOpening() {
               const cueIsHidden = progress > 0.08;
               cue.tabIndex = cueIsHidden ? -1 : 0;
               cue.setAttribute("aria-hidden", String(cueIsHidden));
-              intro.setAttribute("aria-hidden", String(progress < 0.2));
+              intro.setAttribute(
+                "aria-hidden",
+                String(progress < 0.14 || progress > 0.64),
+              );
+              story.setAttribute("aria-hidden", String(progress < 0.55));
             },
           },
         });
@@ -145,7 +179,47 @@ export function HomeOpening() {
             },
             0.25,
           )
-          .to(intro, { autoAlpha: 1, duration: 0.27 }, 0.55);
+          .to(intro, { autoAlpha: 1, duration: 0.27 }, 0.55)
+          .to(
+            intro,
+            {
+              autoAlpha: 0,
+              y: -30,
+              duration: 0.16,
+              ease: "power2.in",
+            },
+            0.82,
+          )
+          .to(
+            layers,
+            {
+              autoAlpha: 1,
+              scale: 1,
+              duration: 0.38,
+              ease: "power2.out",
+            },
+            0.9,
+          )
+          .to(
+            story,
+            {
+              autoAlpha: 1,
+              y: 0,
+              duration: 0.32,
+              ease: "power2.out",
+            },
+            0.92,
+          )
+          .to(
+            lineOverlay,
+            {
+              autoAlpha: 1,
+              duration: 0.26,
+              ease: "power2.out",
+            },
+            0.98,
+          )
+          .to(story, { autoAlpha: 1, duration: 0.36 }, 1.24);
       }, track);
 
       const refreshFrame = window.requestAnimationFrame(() => {
@@ -157,6 +231,7 @@ export function HomeOpening() {
         cue.tabIndex = 0;
         cue.removeAttribute("aria-hidden");
         intro.setAttribute("aria-hidden", "true");
+        story.setAttribute("aria-hidden", "true");
         context.revert();
       };
     }
@@ -173,13 +248,26 @@ export function HomeOpening() {
     <section
       ref={trackRef}
       data-hero-track
-      className="relative h-[240svh] bg-black"
+      className="relative h-[420svh] bg-black"
     >
       <div
         ref={stageRef}
         data-hero-stage
         className="sticky top-0 h-[calc(100svh-var(--nav-height))] w-full overflow-hidden bg-white will-change-[height,background-color]"
       >
+        <div
+          ref={layersRef}
+          aria-hidden="true"
+          className="invisible pointer-events-none absolute top-[6svh] left-1/2 z-[5] aspect-[1.65] w-[92vw] -translate-x-1/2 opacity-0 sm:w-[62vw] md:w-[48vw] lg:w-[30vw] lg:max-w-[27rem]"
+        >
+          <div className="absolute inset-[7%_1%_1%_8%] rounded-[1.4rem] border border-white/12" />
+          <div className="absolute inset-[1%_8%_8%_1%] -rotate-[2.5deg] rounded-[1.4rem] border border-white/18" />
+          <div className="absolute inset-[13%_-2%_-3%_13%] rotate-[3deg] rounded-[1.4rem] border border-white/9" />
+          <div className="absolute top-[18%] right-[5%] bottom-[7%] left-[16%] rounded-[1.2rem] border border-white/8" />
+          <span className="absolute top-[3%] left-[5%] h-1.5 w-1.5 rounded-full bg-white/45" />
+          <span className="absolute right-[4%] bottom-[5%] h-1.5 w-1.5 rounded-full bg-white/25" />
+        </div>
+
         <div
           ref={cardRef}
           data-hero-card
@@ -203,6 +291,24 @@ export function HomeOpening() {
             aria-hidden="true"
             className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.42)_0%,rgba(0,0,0,0.58)_45%,rgba(0,0,0,0.72)_100%)]"
           />
+
+          <svg
+            ref={lineOverlayRef}
+            aria-hidden="true"
+            viewBox="0 0 800 450"
+            preserveAspectRatio="none"
+            className="invisible absolute inset-0 z-[2] h-full w-full opacity-0 mix-blend-screen"
+          >
+            <g fill="none" stroke="rgba(255,255,255,0.38)" strokeWidth="1.2">
+              <path d="M-40 382C118 334 218 338 332 284c116-55 182-41 264-101 76-55 135-58 252-68" />
+              <path d="M-35 407c165-54 275-50 385-103 108-52 173-34 264-98 77-53 141-57 238-64" opacity=".68" />
+              <path d="M-28 430c180-51 280-50 402-107 106-49 171-28 264-93 68-47 122-55 208-61" opacity=".38" />
+              <path d="M55 0v450M205 0v450M355 0v450M505 0v450M655 0v450" opacity=".16" />
+              <path d="M0 75h800M0 225h800M0 375h800" opacity=".16" />
+              <circle cx="596" cy="183" r="4" fill="rgba(255,255,255,.72)" stroke="none" />
+              <circle cx="333" cy="284" r="3" fill="rgba(255,255,255,.55)" stroke="none" />
+            </g>
+          </svg>
 
           <div
             ref={copyRef}
@@ -266,6 +372,51 @@ export function HomeOpening() {
           className="invisible absolute inset-0 z-20 opacity-0 will-change-transform"
         >
           <EditorialIntro forceReveal variant="stage" />
+        </div>
+
+        <div
+          ref={storyRef}
+          aria-hidden="true"
+          className="invisible absolute inset-0 z-20 border-b border-white/75 opacity-0 will-change-transform"
+        >
+          <section
+            aria-labelledby="class-story-heading"
+            className="relative flex h-full items-end px-6 pt-[42svh] pb-[6svh] text-white sm:px-10 sm:pb-[7svh] md:items-center md:px-[9.5vw] md:pt-0 md:pb-0"
+          >
+            <div className="w-full max-w-[22rem] md:translate-y-[3svh]">
+              <p className="text-[0.68rem] font-medium tracking-[0.2em] text-white/48 uppercase sm:text-[0.72rem]">
+                The class
+              </p>
+              <h2
+                id="class-story-heading"
+                className="mt-4 font-display text-[clamp(2rem,1.45rem+1.7vw,2.85rem)] leading-[1.04] font-medium tracking-[-0.04em] text-balance"
+              >
+                The people behind the Algorithm.
+              </h2>
+              <p className="mt-5 max-w-[21rem] text-sm leading-6 text-white/58 sm:text-[0.95rem] sm:leading-7">
+                A graduating class shaped by late nights, shared deadlines,
+                inside jokes, and the courage to keep building. Every name
+                carries a part of the story.
+              </p>
+
+              <Link
+                href="/graduates"
+                className="mt-6 inline-flex min-h-11 items-center justify-center rounded-sm bg-[#123f31] px-5 text-[0.72rem] font-medium tracking-[0.08em] text-white uppercase transition-colors hover:bg-[#195542] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:mt-7"
+              >
+                Meet the graduates
+              </Link>
+
+              <div
+                aria-label="Class markers"
+                className="mt-7 grid grid-cols-4 border-t border-white/16 pt-4 text-[0.55rem] font-medium tracking-[0.12em] text-white/36 uppercase sm:mt-9 sm:text-[0.6rem]"
+              >
+                <span>One class</span>
+                <span>Many paths</span>
+                <span className="text-center">2026</span>
+                <span className="text-right">FUPRE</span>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </section>
