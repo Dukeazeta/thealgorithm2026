@@ -21,7 +21,7 @@ export function EditorialIntro({ forceReveal = false }: EditorialIntroProps) {
       ref={ref}
       id="introduction"
       aria-labelledby="introduction-heading"
-      className="relative scroll-mt-[calc(var(--nav-height)+1rem)] bg-white px-6 py-28 sm:px-10 sm:py-36 md:px-16 md:py-44 lg:px-24"
+      className="relative min-h-svh scroll-mt-[calc(var(--nav-height)+1rem)] bg-white px-6 py-28 sm:px-10 sm:py-36 md:px-16 md:py-44 lg:px-24"
     >
       <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-12 md:gap-12">
         <div className="md:col-span-10 lg:col-span-9">

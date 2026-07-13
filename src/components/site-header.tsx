@@ -33,7 +33,7 @@ export function SiteHeader() {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-black/[0.04] bg-white">
+    <header className="relative z-50 border-b border-black/[0.04] bg-white">
       <div className="mx-auto flex h-[var(--nav-height)] w-full max-w-[96rem] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <Link
           href="/"
