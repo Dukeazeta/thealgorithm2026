@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/transition-link";
 import { useEffect, useRef } from "react";
 import { EditorialIntro } from "@/components/editorial-intro";
 
@@ -313,7 +313,7 @@ export function HomeOpening() {
       <div
         ref={stageRef}
         data-hero-stage
-        className="sticky top-[var(--nav-height)] h-[calc(100dvh-var(--nav-height))] w-full overflow-hidden bg-white will-change-[background-color]"
+        className="sticky top-[var(--nav-height)] h-[calc(100vh-var(--nav-height))] w-full overflow-hidden bg-white will-change-[background-color]"
       >
         <div
           ref={layersRef}
@@ -460,7 +460,7 @@ export function HomeOpening() {
               </p>
 
               <Link
-                href="#class"
+                href="/graduates"
                 className="mt-6 inline-flex min-h-11 items-center justify-center rounded-sm bg-[#123f31] px-5 text-[0.72rem] font-medium tracking-[0.08em] text-white uppercase transition-colors hover:bg-[#195542] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:mt-7"
               >
                 Meet the graduates

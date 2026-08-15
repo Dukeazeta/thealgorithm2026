@@ -35,6 +35,8 @@ export const metadata: Metadata = {
     "The digital yearbook for the FUPRE Algorithm Class of 2026 - graduates, shared photographs, and the class story.",
 };
 
+import { TransitionCurtain } from "@/components/transition-curtain";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,6 +45,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${aeonik.variable} h-full antialiased`}>
       <body className={`${aeonik.className} min-h-full bg-white text-foreground`}>
+        <TransitionCurtain />
         {children}
       </body>
     </html>

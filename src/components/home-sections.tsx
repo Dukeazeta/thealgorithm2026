@@ -1,5 +1,10 @@
+"use client";
+
 import Image from "next/image";
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/transition-link";
+import { useRef, useLayoutEffect } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 const archiveLanes = [
   { number: "01", label: "Campus" },
@@ -164,15 +169,116 @@ function ContourField() {
 }
 
 export function HomeSections() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+    
+    const ctx = gsap.context(() => {
+      // 1. Memories Header
+      gsap.from(".memories-header > *", {
+        scrollTrigger: { trigger: ".memories-header", start: "top 85%", toggleActions: "play reverse play reverse" },
+        y: 40,
+        opacity: 0,
+        duration: 1.2,
+        stagger: 0.1,
+        ease: "expo.out"
+      });
+
+      // 2. Memories Hero Image Reveal
+      gsap.fromTo(".memories-figure", 
+        { clipPath: "inset(15% 5% 15% 5% round 1.5rem)" }, 
+        { 
+          clipPath: "inset(0% 0% 0% 0% round 1.5rem)", 
+          duration: 1.5, 
+          ease: "expo.inOut",
+          scrollTrigger: { trigger: ".memories-figure", start: "top 85%", toggleActions: "play reverse play reverse" } 
+        }
+      );
+
+      // 3. Memories Archive Lanes
+      gsap.from(".archive-lane", {
+        scrollTrigger: { trigger: ".archive-lanes-container", start: "top 85%", toggleActions: "play reverse play reverse" },
+        x: -30,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.1,
+        ease: "power3.out"
+      });
+
+      // 4. Story Chapters
+      gsap.utils.toArray(".story-chapter").forEach((chapter: any) => {
+        gsap.from(chapter.querySelectorAll(".story-col"), {
+          scrollTrigger: { trigger: chapter, start: "top 85%", toggleActions: "play reverse play reverse" },
+          y: 40,
+          opacity: 0,
+          duration: 1.2,
+          stagger: 0.15,
+          ease: "expo.out"
+        });
+      });
+
+      // 5. Class Notes Bento
+      gsap.from(".bento-tile", {
+        scrollTrigger: { trigger: ".bento-grid", start: "top 80%", toggleActions: "play reverse play reverse" },
+        y: 100,
+        opacity: 0,
+        rotation: 2,
+        scale: 0.9,
+        duration: 1.2,
+        stagger: { amount: 0.4, grid: "auto", from: "start" },
+        ease: "back.out(1.2)"
+      });
+      
+      gsap.to(".bento-img", {
+        scrollTrigger: { trigger: ".bento-img", start: "top bottom", end: "bottom top", scrub: true },
+        scale: 1.15,
+        ease: "none"
+      });
+
+      // 6. Acknowledgements
+      gsap.from(".ack-heading", {
+        scrollTrigger: { trigger: ".ack-heading", start: "top 85%", toggleActions: "play reverse play reverse" },
+        y: 120,
+        opacity: 0,
+        skewY: 4,
+        duration: 1.5,
+        ease: "expo.out"
+      });
+      
+      gsap.from(".ack-group", {
+        scrollTrigger: { trigger: ".ack-lists", start: "top 85%", toggleActions: "play reverse play reverse" },
+        y: 30,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.1,
+        ease: "power3.out"
+      });
+
+      // 7. Closing
+      gsap.from(".closing-content > *", {
+        scrollTrigger: { trigger: ".closing-content", start: "top 85%", toggleActions: "play reverse play reverse" },
+        y: 50,
+        opacity: 0,
+        duration: 1.2,
+        stagger: 0.1,
+        ease: "power3.out"
+      });
+
+    }, containerRef);
+    
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <>
+    <div ref={containerRef}>
       <section
         id="memories"
         aria-labelledby="memories-heading"
         className="scroll-mt-6 bg-[#efeee8] px-4 py-24 sm:px-6 sm:py-32 lg:px-8 lg:py-40"
       >
         <div className="mx-auto max-w-[96rem]">
-          <header className="grid gap-8 border-t border-black/15 pt-5 md:grid-cols-12 md:gap-6">
+          <header className="memories-header grid gap-8 border-t border-black/15 pt-5 md:grid-cols-12 md:gap-6">
             <p className="text-[0.68rem] font-medium tracking-[0.18em] text-black/55 uppercase md:col-span-3">
               The memories
             </p>
@@ -192,7 +298,7 @@ export function HomeSections() {
           </header>
 
           <div className="mt-16 grid gap-4 lg:mt-24 lg:grid-cols-[1.58fr_0.92fr]">
-            <figure className="group relative min-h-[30rem] overflow-hidden rounded-[1.5rem] bg-black sm:min-h-[40rem] sm:rounded-[2rem] lg:min-h-[52rem]">
+            <figure className="memories-figure group relative min-h-[30rem] overflow-hidden rounded-[1.5rem] bg-black sm:min-h-[40rem] sm:rounded-[2rem] lg:min-h-[52rem]">
               <Image
                 src="/images/hero-bg.webp"
                 alt="The Algorithm Class of 2026 gathered in front of the College of Science building"
@@ -237,15 +343,16 @@ export function HomeSections() {
                 </div>
               </article>
 
-              <article className="rounded-[1.5rem] bg-white p-6 sm:rounded-[2rem] sm:p-8 lg:p-10">
+              {/* Archive Lanes — flat list, no card wrapper */}
+              <div className="archive-lanes-container flex flex-col justify-between p-1 sm:p-2 lg:p-4">
                 <p className="text-[0.65rem] font-medium tracking-[0.16em] text-black/48 uppercase">
                   Archive lanes
                 </p>
-                <div className="mt-8 border-t border-black/12">
+                <div className="mt-6 border-t border-black/12">
                   {archiveLanes.map((lane) => (
                     <div
                       key={lane.number}
-                      className="grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 border-b border-black/12 py-4"
+                      className="archive-lane grid grid-cols-[2.5rem_1fr_auto] items-center gap-3 border-b border-black/12 py-4"
                     >
                       <span className="text-[0.64rem] font-medium tracking-[0.12em] text-black/38">
                         {lane.number}
@@ -266,7 +373,7 @@ export function HomeSections() {
                   Continue the story
                   <ArrowIcon className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
                 </Link>
-              </article>
+              </div>
             </div>
           </div>
         </div>
@@ -298,54 +405,31 @@ export function HomeSections() {
             </div>
           </header>
 
-          <div className="mt-14 grid gap-4 md:mt-20 md:grid-cols-3">
-            {storyChapters.map((chapter) => {
-              const isDark = chapter.tone === "dark";
-              const toneClass =
-                chapter.tone === "light"
-                  ? "bg-[#deddd7] text-black"
-                  : chapter.tone === "blue"
-                    ? "bg-[#cad8e1] text-black"
-                    : "bg-[#0c0d0d] text-white";
-
-              return (
-                <article
-                  key={chapter.number}
-                  className={`flex min-h-[34rem] flex-col overflow-hidden rounded-[1.5rem] sm:min-h-[40rem] sm:rounded-[2rem] ${toneClass}`}
-                >
-                  <div className="h-[46%] min-h-[14rem] border-b border-current/12 p-3">
-                    <StoryGraphic
-                      number={chapter.number}
-                      tone={chapter.tone}
-                    />
-                  </div>
-                  <div className="flex flex-1 flex-col p-6 sm:p-8">
-                    <div className="flex items-center justify-between gap-4">
-                      <p
-                        className={`text-[0.64rem] font-medium tracking-[0.16em] uppercase ${isDark ? "text-white/60" : "text-black/48"}`}
-                      >
-                        {chapter.eyebrow}
-                      </p>
-                      <span
-                        className={`text-[0.64rem] font-medium tracking-[0.12em] ${isDark ? "text-white/38" : "text-black/35"}`}
-                      >
-                        {chapter.number}
-                      </span>
-                    </div>
-                    <div className="mt-auto pt-12">
-                      <h3 className="font-display text-[clamp(1.7rem,1.35rem+1.2vw,2.65rem)] leading-[1.03] tracking-[-0.04em] text-balance">
-                        {chapter.title}
-                      </h3>
-                      <p
-                        className={`mt-5 max-w-sm text-sm leading-6 sm:text-base sm:leading-7 ${isDark ? "text-white/64" : "text-black/58"}`}
-                      >
-                        {chapter.body}
-                      </p>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
+          {/* Flat editorial chapter rows with dividers */}
+          <div className="mt-14 divide-y divide-black/10 border-t border-black/10 md:mt-20">
+            {storyChapters.map((chapter) => (
+              <article
+                key={chapter.number}
+                className="story-chapter grid gap-4 py-10 sm:py-14 md:grid-cols-12 md:gap-6 md:py-16"
+              >
+                <div className="story-col flex items-start justify-between md:col-span-3 md:flex-col md:gap-3">
+                  <p className="text-[0.64rem] font-medium tracking-[0.16em] text-black/48 uppercase">
+                    {chapter.eyebrow}
+                  </p>
+                  <span className="text-[0.64rem] font-medium tracking-[0.12em] text-black/35">
+                    {chapter.number}
+                  </span>
+                </div>
+                <div className="story-col md:col-span-5 md:col-start-5">
+                  <h3 className="font-display text-[clamp(1.7rem,1.35rem+1.2vw,2.65rem)] leading-[1.03] tracking-[-0.04em] text-balance">
+                    {chapter.title}
+                  </h3>
+                  <p className="mt-4 max-w-sm text-sm leading-6 text-black/58 sm:text-base sm:leading-7">
+                    {chapter.body}
+                  </p>
+                </div>
+              </article>
+            ))}
           </div>
 
           <div className="mt-12 flex justify-end border-t border-black/12 pt-5 sm:mt-16">
@@ -363,9 +447,9 @@ export function HomeSections() {
       <section
         id="class-notes"
         aria-labelledby="class-notes-heading"
-        className="overflow-hidden bg-white px-4 py-20 sm:px-6 sm:py-28 lg:px-8 lg:py-32"
+        className="overflow-hidden bg-white py-20 sm:py-28 lg:py-32"
       >
-        <div className="mx-auto max-w-[76rem]">
+        <div className="mx-auto max-w-[76rem] px-4 sm:px-6 lg:px-8">
           <h2
             id="class-notes-heading"
             className="mx-auto max-w-5xl text-center font-display text-[clamp(2.5rem,1.65rem+3.5vw,4.5rem)] leading-[1.02] font-medium tracking-[-0.055em] text-balance"
@@ -374,21 +458,22 @@ export function HomeSections() {
             <br />
             Stories from our class.
           </h2>
+        </div>
 
-          <div className="mt-16 grid grid-cols-1 gap-3 sm:mt-24 sm:auto-rows-[7.5rem] sm:grid-cols-2 lg:grid-cols-4 lg:auto-rows-[4.65rem]">
-            <article className="flex min-h-[16rem] flex-col justify-end rounded-[1.25rem] bg-[#f0efeb] p-5 sm:col-span-1 sm:row-span-2 lg:col-span-2 lg:row-span-4 lg:min-h-0">
+        <div className="bento-grid mt-16 grid grid-cols-1 gap-px bg-black/10 sm:mt-24 sm:auto-rows-[7.5rem] sm:grid-cols-2 lg:grid-cols-4 lg:auto-rows-[4.65rem] border-y border-black/10">
+            <article className="bento-tile flex min-h-[16rem] flex-col justify-end bg-[#f0efeb] p-5 sm:col-span-1 sm:row-span-2 lg:col-span-2 lg:row-span-4 lg:min-h-0">
               <p className="font-display text-[clamp(1.8rem,1.25rem+1.5vw,2.7rem)] leading-[1.05] tracking-[-0.045em]">
                 The people behind the final result
               </p>
             </article>
 
-            <article className="group relative min-h-[22rem] overflow-hidden rounded-[1.25rem] bg-[#153f30] text-white sm:row-span-3 lg:col-span-2 lg:row-span-5 lg:min-h-0">
+            <article className="bento-tile group relative min-h-[22rem] overflow-hidden bg-[#153f30] text-white sm:row-span-3 lg:col-span-2 lg:row-span-5 lg:min-h-0">
               <Image
                 src="/images/hero-bg.webp"
                 alt="The Algorithm Class of 2026 gathered in front of the College of Science building"
                 fill
                 sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) 50vw, 38rem"
-                className="object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
+                className="bento-img object-cover transition-transform duration-1000 ease-out group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.66))]" />
               <div className="absolute inset-x-0 bottom-0 p-6 sm:p-7">
@@ -398,8 +483,8 @@ export function HomeSections() {
               </div>
             </article>
 
-            <article className="flex min-h-[17rem] flex-col rounded-[1.25rem] bg-[#f0efeb] p-4 sm:row-span-2 lg:col-span-2 lg:row-span-2 lg:min-h-0 lg:p-5">
-              <div className="mb-4 flex flex-1 items-center justify-center overflow-hidden rounded-xl bg-[#d6dbe1]">
+            <article className="bento-tile flex min-h-[17rem] flex-col bg-[#f0efeb] p-4 sm:row-span-2 lg:col-span-2 lg:row-span-2 lg:min-h-0 lg:p-5">
+              <div className="mb-4 flex flex-1 items-center justify-center overflow-hidden bg-[#d6dbe1]">
                 <svg aria-hidden="true" viewBox="0 0 360 130" className="h-full w-full">
                   <g fill="none" stroke="rgba(10,10,10,.32)">
                     <path d="M-20 103c65-73 120-72 177-17s111 44 223-21" />
@@ -413,7 +498,7 @@ export function HomeSections() {
               </p>
             </article>
 
-            <article className="flex min-h-[17rem] flex-col justify-between rounded-[1.25rem] bg-[#cad8e1] p-5 sm:row-span-2 lg:row-span-3 lg:min-h-0">
+            <article className="bento-tile flex min-h-[17rem] flex-col justify-between bg-[#cad8e1] p-5 sm:row-span-2 lg:row-span-3 lg:min-h-0">
               <p className="text-[0.64rem] font-medium tracking-[0.16em] text-black/45 uppercase">
                 Class record / 02
               </p>
@@ -422,7 +507,7 @@ export function HomeSections() {
               </p>
             </article>
 
-            <article className="flex min-h-[17rem] flex-col justify-between rounded-[1.25rem] bg-[#d3c3b2] p-5 sm:row-span-2 lg:row-span-3 lg:min-h-0">
+            <article className="bento-tile flex min-h-[17rem] flex-col justify-between bg-[#d3c3b2] p-5 sm:row-span-2 lg:row-span-3 lg:min-h-0">
               <p className="text-[0.64rem] font-medium tracking-[0.16em] text-black/45 uppercase">
                 Class record / 03
               </p>
@@ -431,7 +516,7 @@ export function HomeSections() {
               </p>
             </article>
 
-            <article className="relative flex min-h-[17rem] items-end overflow-hidden rounded-[1.25rem] bg-[#0c0d0d] p-5 text-white sm:col-span-2 sm:row-span-2 lg:col-span-2 lg:row-span-2 lg:min-h-0">
+            <article className="bento-tile relative flex min-h-[17rem] items-end overflow-hidden bg-[#0c0d0d] p-5 text-white sm:col-span-2 sm:row-span-2 lg:col-span-2 lg:row-span-2 lg:min-h-0">
               <div className="absolute inset-0 opacity-60">
                 <ContourField />
               </div>
@@ -441,24 +526,15 @@ export function HomeSections() {
               </p>
             </article>
           </div>
-        </div>
       </section>
 
       <section
         id="acknowledgements"
         aria-labelledby="acknowledgements-heading"
-        className="scroll-mt-6 bg-black px-4 py-20 text-white sm:px-6 sm:py-28 lg:px-8 lg:py-36"
+        className="scroll-mt-6 bg-[#123f31] px-4 py-20 text-white sm:px-6 sm:py-28 lg:px-8 lg:py-36"
       >
         <div className="mx-auto max-w-[96rem]">
-          <div className="relative min-h-[44rem] overflow-hidden rounded-[1.5rem] bg-[#123f31] p-6 sm:rounded-[2rem] sm:p-10 lg:min-h-[48rem] lg:p-14">
-            <div
-              aria-hidden="true"
-              className="absolute -top-24 -right-20 h-[34rem] w-[34rem] rounded-full border border-white/10"
-            />
-            <div
-              aria-hidden="true"
-              className="absolute -top-10 right-6 h-[24rem] w-[24rem] rounded-full border border-white/10"
-            />
+          <div className="relative min-h-[44rem] overflow-hidden lg:min-h-[48rem]">
             <div className="relative z-10 flex min-h-[calc(44rem-3rem)] flex-col lg:min-h-[calc(48rem-7rem)]">
               <div className="flex items-start justify-between gap-5">
                 <p className="text-[0.65rem] font-medium tracking-[0.18em] text-white/68 uppercase">
@@ -476,14 +552,14 @@ export function HomeSections() {
               <div className="my-auto py-16">
                 <h2
                   id="acknowledgements-heading"
-                  className="max-w-6xl font-display text-[clamp(3.25rem,1.3rem+8vw,10.5rem)] leading-[0.84] font-medium tracking-[-0.07em] text-balance"
+                  className="ack-heading max-w-6xl font-display text-[clamp(3.25rem,1.3rem+8vw,10.5rem)] leading-[0.84] font-medium tracking-[-0.07em] text-balance"
                 >
                   Nobody gets here alone.
                 </h2>
               </div>
 
-              <div className="grid gap-8 border-t border-white/18 pt-6 md:grid-cols-12">
-                <p className="max-w-lg text-sm leading-6 text-white/68 sm:text-base sm:leading-7 md:col-span-5">
+              <div className="ack-lists grid gap-8 border-t border-white/18 pt-6 md:grid-cols-12">
+                <p className="ack-group max-w-lg text-sm leading-6 text-white/68 sm:text-base sm:leading-7 md:col-span-5">
                   This yearbook makes room for the people whose teaching,
                   patience, leadership, work, and belief helped the class reach
                   this point.
@@ -492,7 +568,7 @@ export function HomeSections() {
                   {acknowledgementGroups.map((group, index) => (
                     <p
                       key={group}
-                      className="border-t border-white/14 pt-3 text-[0.72rem] font-medium tracking-[0.05em] text-white/76"
+                      className="ack-group border-t border-white/14 pt-3 text-[0.72rem] font-medium tracking-[0.05em] text-white/76"
                     >
                       <span className="mr-2 text-white/34">
                         0{index + 1}
@@ -510,10 +586,10 @@ export function HomeSections() {
       <section
         id="closing"
         aria-labelledby="closing-heading"
-        className="bg-black px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8 lg:pb-8"
+        className="bg-[#d3c3b2]"
       >
-        <div className="mx-auto grid min-h-[45rem] max-w-[96rem] overflow-hidden rounded-[1.5rem] bg-[#d3c3b2] lg:grid-cols-[1.04fr_0.96fr] lg:rounded-[2rem]">
-          <div className="flex flex-col justify-between p-6 sm:p-10 lg:p-14">
+        <div className="mx-auto grid min-h-[45rem] max-w-[96rem] overflow-hidden lg:grid-cols-[1.04fr_0.96fr]">
+          <div className="closing-content flex flex-col justify-between p-6 sm:p-10 lg:p-14">
             <p className="text-[0.65rem] font-medium tracking-[0.18em] text-black/52 uppercase">
               The Algorithm 26
             </p>
@@ -531,7 +607,7 @@ export function HomeSections() {
             </div>
             <div className="flex flex-col gap-3 border-t border-black/18 pt-6 sm:flex-row sm:items-center">
               <Link
-                href="#class"
+                href="/graduates"
                 className="inline-flex min-h-12 items-center justify-center rounded-sm bg-black px-6 text-[0.72rem] font-medium tracking-[0.1em] text-white uppercase transition-colors hover:bg-black/80"
               >
                 Return to the class
@@ -550,7 +626,7 @@ export function HomeSections() {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 
@@ -558,7 +634,7 @@ const footerGroups = [
   {
     title: "Explore",
     links: [
-      { href: "/#class", label: "The class" },
+      { href: "/graduates", label: "The class" },
       { href: "/gallery", label: "Gallery" },
       { href: "/story", label: "Our story" },
     ],
@@ -591,8 +667,32 @@ const footerGroups = [
 ] as const;
 
 export function SiteFooter() {
+  const footerRef = useRef<HTMLElement>(null);
+  const textRef = useRef<HTMLHeadingElement>(null);
+
+  useLayoutEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+    const ctx = gsap.context(() => {
+      gsap.from(".footer-word", {
+        scrollTrigger: {
+          trigger: textRef.current,
+          start: "top 85%",
+          toggleActions: "play reverse play reverse",
+        },
+        opacity: 0,
+        y: 40,
+        rotateX: -45,
+        duration: 1.2,
+        stagger: 0.1,
+        ease: "power3.out",
+      });
+    }, footerRef);
+
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <footer className="overflow-hidden bg-black px-4 pt-24 pb-6 text-white sm:px-6 sm:pt-32 lg:px-8 lg:pt-40">
+    <footer ref={footerRef} className="overflow-hidden bg-black px-4 pt-24 pb-6 text-white sm:px-6 sm:pt-32 lg:px-8 lg:pt-40">
       <div className="mx-auto max-w-[96rem]">
         <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-12 md:gap-x-4 lg:gap-x-6">
           <Link
@@ -629,8 +729,13 @@ export function SiteFooter() {
           </nav>
         </div>
 
-        <h2 className="mt-24 max-w-[92rem] font-display text-[clamp(3.25rem,7.5vw,7.25rem)] leading-[0.9] font-medium tracking-[-0.065em] text-balance sm:mt-32">
-          Every name. Every memory. One class story.
+        <h2 ref={textRef} className="mt-24 max-w-[92rem] font-display text-[clamp(3.25rem,7.5vw,7.25rem)] leading-[0.9] font-medium tracking-[-0.065em] text-balance sm:mt-32">
+          {["Every", "name.", "Every", "memory.", "One", "class", "story."].map((word, i) => (
+            <span key={i} className="inline-block">
+              <span className="footer-word inline-block origin-bottom-left">{word}</span>
+              {i !== 6 && <span>&nbsp;</span>}
+            </span>
+          ))}
         </h2>
 
         <div className="mt-20 flex flex-col gap-8 font-mono text-[0.66rem] tracking-[-0.01em] text-white/34 uppercase sm:mt-28 sm:flex-row sm:items-end sm:justify-between">
