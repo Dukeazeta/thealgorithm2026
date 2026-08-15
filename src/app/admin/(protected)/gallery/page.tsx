@@ -3,7 +3,79 @@ import { listAllGalleryItems } from "@/lib/content";
 
 export default async function AdminGalleryPage() {
   const gallery = await listAllGalleryItems();
+
   return (
-    <main className="w-full max-w-full overflow-x-hidden px-5 py-20 sm:px-10 sm:py-28 lg:px-16 lg:py-36"><div className="mx-auto max-w-[96rem]"><div className="grid gap-8 border-b border-white/10 pb-12 lg:grid-cols-12 lg:items-end"><div className="lg:col-span-8"><p className="text-xs font-semibold tracking-[0.18em] text-[#d7ff5a] uppercase">Living gallery</p><h1 className="mt-5 max-w-6xl text-[clamp(3rem,5vw,6rem)] leading-[0.9] font-medium tracking-[-0.075em]">Build the visual memory.</h1></div><p className="max-w-md text-sm leading-7 text-white/50 lg:col-span-4">Upload an image, give it context, and decide whether the class should see it now or later.</p></div><div className="mt-14 grid gap-12 lg:grid-cols-12"><section className="lg:col-span-7"><h2 className="text-2xl font-medium tracking-[-0.05em]">New gallery frame</h2><p className="mt-2 mb-6 text-sm text-white/45">An image is required before the frame can be saved.</p><GalleryEditor /></section><aside className="lg:col-span-5"><h2 className="text-2xl font-medium tracking-[-0.05em]">Existing frames</h2><div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">{gallery.length === 0 ? <div className="rounded-2xl border border-dashed border-white/15 p-6 text-sm text-white/45">No gallery frames yet.</div> : gallery.map(({ gallery: item, imageUrl }) => <div key={item.id} className="group flex gap-4 rounded-2xl border border-white/10 bg-white/[0.045] p-3"><div className="h-20 w-24 shrink-0 overflow-hidden rounded-xl bg-cover bg-center transition-transform duration-700 group-hover:scale-105" style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined} /><div className="min-w-0 py-1"><p className="truncate font-medium">{item.title}</p><p className="mt-1 text-xs text-white/40">{item.category} · {item.status}</p></div></div>)}</div></aside></div></div></main>
+    <main className="w-full max-w-full overflow-x-hidden bg-[#0b0d0d] text-white">
+      {/* Hero Section */}
+      <section className="border-b border-white/5 px-6 py-16 sm:px-10 sm:py-24 lg:px-16 lg:py-32">
+        <div className="mx-auto max-w-[96rem]">
+          <div className="grid gap-8 lg:grid-cols-12 lg:items-end">
+            <div className="lg:col-span-8">
+              <div className="mb-4 flex items-center gap-2 text-[0.65rem] font-semibold tracking-[0.2em] text-white/30 uppercase">
+                <span className="h-1.5 w-1.5 bg-white/40" />
+                Living gallery
+              </div>
+              <h1 className="mt-5 max-w-6xl text-[clamp(2.5rem,5vw,5rem)] leading-[0.95] font-medium tracking-tighter text-white">
+                Build the visual memory.
+              </h1>
+            </div>
+            <p className="max-w-md text-sm leading-relaxed text-white/40 lg:col-span-4 lg:pb-2">
+              Upload an image, give it context, and decide whether the class should see it now or later.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Editor & Records Section */}
+      <section className="px-6 py-16 sm:px-10 lg:px-16">
+        <div className="mx-auto max-w-[96rem]">
+          <div className="grid gap-16 lg:grid-cols-12">
+            
+            {/* Editor Column */}
+            <div className="lg:col-span-7">
+              <div className="mb-8 border-b border-white/10 pb-4">
+                <h2 className="text-2xl font-medium tracking-tight">New gallery frame</h2>
+                <p className="mt-2 text-[0.7rem] uppercase tracking-wide text-white/40">An image is required before saving</p>
+              </div>
+              <GalleryEditor />
+            </div>
+
+            {/* Existing Records Column */}
+            <aside className="lg:col-span-5">
+              <div className="mb-8 border-b border-white/10 pb-4">
+                <h2 className="text-2xl font-medium tracking-tight">Existing frames</h2>
+                <p className="mt-2 text-[0.7rem] uppercase tracking-wide text-white/40">All saved photographs</p>
+              </div>
+
+              <div className="grid gap-px bg-white/5">
+                {gallery.length === 0 ? (
+                  <div className="bg-[#0b0d0d] p-8 text-center text-[0.7rem] uppercase tracking-wide text-white/40">
+                    No gallery frames yet.
+                  </div>
+                ) : (
+                  gallery.map(({ gallery: item, imageUrl }) => (
+                    <div key={item.id} className="group flex items-center gap-4 bg-[#0b0d0d] p-4 transition-colors hover:bg-[#101212]">
+                      <div 
+                        className="h-16 w-20 shrink-0 bg-white/5 bg-cover bg-center grayscale transition-all duration-700 group-hover:grayscale-0"
+                        style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined} 
+                      />
+                      <div className="min-w-0 flex-1 py-1">
+                        <p className="truncate font-medium text-white">{item.title}</p>
+                        <div className="mt-2 flex items-center gap-3">
+                          <span className="text-[0.6rem] font-bold tracking-wider text-white/40 uppercase">{item.category}</span>
+                          <span className="text-white/20">•</span>
+                          <span className="text-[0.6rem] font-bold tracking-wider text-white/40 uppercase">{item.status}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </aside>
+            
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
