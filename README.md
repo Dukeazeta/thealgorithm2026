@@ -34,3 +34,23 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Backend setup
+
+The archive backend uses Turso/libSQL through Drizzle and Vercel Blob for images.
+
+1. Copy `.env.example` to `.env.local` and fill in the Turso URL, Turso token, session secret, and Blob token.
+2. Generate and apply the schema migrations:
+
+```bash
+pnpm db:generate
+pnpm db:migrate
+```
+
+3. Set `ADMIN_SEED_EMAIL` and an `ADMIN_SEED_PASSWORD` of at least 8 characters, then create the first administrator:
+
+```bash
+pnpm db:seed-admin
+```
+
+The public site reads only published records. The database starts empty by design; create content from `/admin` after signing in.

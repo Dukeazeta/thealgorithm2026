@@ -63,6 +63,8 @@ function ArrowIcon({ className = "" }: { className?: string }) {
   );
 }
 
+// Decorative variant retained for future editorial tiles.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function StoryGraphic({
   number,
   tone,
@@ -207,7 +209,7 @@ export function HomeSections() {
       });
 
       // 4. Story Chapters
-      gsap.utils.toArray(".story-chapter").forEach((chapter: any) => {
+      gsap.utils.toArray<HTMLElement>(".story-chapter").forEach((chapter) => {
         gsap.from(chapter.querySelectorAll(".story-col"), {
           scrollTrigger: { trigger: chapter, start: "top 85%", toggleActions: "play reverse play reverse" },
           y: 40,

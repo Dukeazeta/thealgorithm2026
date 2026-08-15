@@ -106,11 +106,13 @@ const GALLERY_ITEMS: GalleryItem[] = [
 
 const CATEGORIES = ["All", "Class", "Campus", "Labs", "Celebrations"] as const;
 
-export function GalleryView() {
+export function GalleryView({ items = GALLERY_ITEMS }: { items?: GalleryItem[] }) {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [activeItem, setActiveItem] = useState<GalleryItem | null>(null);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [submissionError, setSubmissionError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Keyboard accessibility for Lightbox
   useEffect(() => {
@@ -145,12 +147,12 @@ export function GalleryView() {
   }
 
   const containerRef = useRef<HTMLElement>(null);
-  const gridRef = useRef<HTMLDivElement>(null);
 
+  const galleryItems = items;
   const filteredItems =
     selectedCategory === "All"
-      ? GALLERY_ITEMS
-      : GALLERY_ITEMS.filter((item) => item.category === selectedCategory);
+      ? galleryItems
+      : galleryItems.filter((item) => item.category === selectedCategory);
 
   // Column Parallax Effect
   useEffect(() => {
@@ -264,7 +266,7 @@ export function GalleryView() {
       <section className="px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-[96rem]">
           <div
-            onClick={() => setActiveItem(GALLERY_ITEMS[0])}
+            onClick={() => galleryItems[0] && setActiveItem(galleryItems[0])}
             className="group relative min-h-[28rem] cursor-pointer overflow-hidden rounded-[2rem] bg-black sm:min-h-[38rem] lg:min-h-[48rem]"
           >
             <Image
@@ -403,6 +405,7 @@ export function GalleryView() {
                 src={activeItem.imageSrc}
                 alt={activeItem.alt}
                 fill
+                unoptimized
                 priority
                 sizes="(max-width: 1024px) 100vw, 1024px"
                 className="object-contain"
@@ -476,9 +479,24 @@ export function GalleryView() {
               </div>
             ) : (
               <form
-                onSubmit={(e) => {
+              onSubmit={(e) => {
                   e.preventDefault();
-                  setSubmissionSuccess(true);
+                  setSubmissionError("");
+                  setIsSubmitting(true);
+                  const form = e.currentTarget;
+                  void fetch("/api/submissions", {
+                    method: "POST",
+                    body: new FormData(form),
+                  })
+                    .then(async (response) => {
+                      const body = (await response.json()) as { error?: string };
+                      if (!response.ok) throw new Error(body.error ?? "Submission failed.");
+                      setSubmissionSuccess(true);
+                    })
+                    .catch((error: unknown) => {
+                      setSubmissionError(error instanceof Error ? error.message : "Submission failed.");
+                    })
+                    .finally(() => setIsSubmitting(false));
                 }}
                 className="mt-6 space-y-4"
               >
@@ -488,6 +506,7 @@ export function GalleryView() {
                   </label>
                   <input
                     type="text"
+                    name="contributorName"
                     required
                     placeholder="e.g. Victor E. / CS '26"
                     className="mt-1.5 w-full rounded-lg border border-black/15 px-3.5 py-2.5 text-sm outline-none focus:border-foreground focus:ring-1 focus:ring-foreground"
@@ -498,7 +517,7 @@ export function GalleryView() {
                   <label className="block text-xs font-semibold text-foreground">
                     Category
                   </label>
-                  <select className="mt-1.5 w-full rounded-lg border border-black/15 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-foreground focus:ring-1 focus:ring-foreground">
+                  <select name="category" className="mt-1.5 w-full rounded-lg border border-black/15 bg-white px-3.5 py-2.5 text-sm outline-none focus:border-foreground focus:ring-1 focus:ring-foreground">
                     <option value="Class">The Class & Friends</option>
                     <option value="Labs">Classrooms & Labs</option>
                     <option value="Campus">Campus Life & Landmarks</option>
@@ -510,7 +529,15 @@ export function GalleryView() {
                   <label className="block text-xs font-semibold text-foreground">
                     Memory Title or Caption
                   </label>
+                  <input
+                    type="text"
+                    name="title"
+                    required
+                    placeholder="Give the memory a title"
+                    className="mt-1.5 w-full rounded-lg border border-black/15 px-3.5 py-2.5 text-sm outline-none focus:border-foreground focus:ring-1 focus:ring-foreground"
+                  />
                   <textarea
+                    name="caption"
                     required
                     rows={3}
                     placeholder="Describe the moment, who was there, and why it mattered..."
@@ -518,12 +545,20 @@ export function GalleryView() {
                   />
                 </div>
 
+                <div>
+                  <label className="block text-xs font-semibold text-foreground">Optional image</label>
+                  <input name="image" type="file" accept="image/jpeg,image/png,image/webp" className="mt-1.5 block w-full rounded-lg border border-black/15 px-3.5 py-2.5 text-sm text-foreground file:mr-3 file:rounded-md file:border-0 file:bg-black/8 file:px-3 file:py-1.5 file:text-xs file:font-semibold" />
+                  <p className="mt-1.5 text-xs text-muted">JPEG, PNG, or WebP up to 10 MB.</p>
+                </div>
+
+                {submissionError && <p className="rounded-lg border border-red-500/25 bg-red-50 px-3 py-2 text-xs text-red-700">{submissionError}</p>}
+
                 <div className="pt-2">
                   <button
                     type="submit"
                     className="flex h-11 w-full items-center justify-center rounded-lg bg-[#123f31] text-xs font-semibold tracking-wide text-white transition-colors hover:bg-[#185341]"
                   >
-                    Submit to Class Archive
+                    {isSubmitting ? "Sending memory…" : "Submit to Class Archive"}
                   </button>
                 </div>
               </form>
@@ -547,6 +582,7 @@ function GalleryCard({ item, onClick, className }: { item: GalleryItem; onClick:
             src={item.imageSrc}
             alt={item.alt}
             fill
+            unoptimized
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110"
           />

@@ -138,9 +138,26 @@ const STATS = [
   { label: "Lifelong Friendships", value: "Forever" },
 ];
 
-export function StoryView() {
+export function StoryView({
+  data = { chapters: CHAPTERS, memories: MEMORIES, stats: STATS },
+}: {
+  data?: { chapters: StoryChapter[]; memories: typeof MEMORIES; stats: typeof STATS };
+}) {
+  const { chapters, memories, stats } = data;
   const [activeChapterId, setActiveChapterId] = useState<string>("100L");
-  const currentChapter = CHAPTERS.find((c) => c.id === activeChapterId) || CHAPTERS[0];
+  const currentChapter = chapters.find((c) => c.id === activeChapterId) || chapters[0];
+
+  if (!currentChapter) {
+    return (
+      <div className="flex min-h-[70svh] items-center justify-center bg-[#efeee8] px-6 text-center text-foreground">
+        <div>
+          <p className="text-[0.68rem] font-medium tracking-[0.2em] text-muted uppercase">The Class Chronicle</p>
+          <h1 className="mt-4 font-display text-4xl font-medium tracking-[-0.05em] sm:text-6xl">The story is still being written.</h1>
+          <p className="mx-auto mt-5 max-w-md text-sm leading-7 text-muted">The archive console will publish the first chapter here when it is ready.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#efeee8] text-foreground">
@@ -228,7 +245,7 @@ export function StoryView() {
 
             {/* Level Switcher Pills */}
             <div className="flex flex-wrap gap-2 rounded-xl bg-black/[0.06] p-1.5 backdrop-blur-sm">
-              {CHAPTERS.map((chapter) => {
+              {chapters.map((chapter) => {
                 const isActive = chapter.id === activeChapterId;
                 return (
                   <button
@@ -333,7 +350,7 @@ export function StoryView() {
           </div>
 
           <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {MEMORIES.map((memory) => (
+            {memories.map((memory) => (
               <article
                 key={memory.title}
                 className="flex flex-col justify-between rounded-2xl border border-black/8 bg-[#f9f8f4] p-6 transition-transform duration-300 hover:-translate-y-1 hover:shadow-md sm:p-7"
@@ -377,7 +394,7 @@ export function StoryView() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 lg:col-span-7">
-              {STATS.map((stat) => (
+              {stats.map((stat) => (
                 <div
                   key={stat.label}
                   className="flex flex-col justify-between rounded-2xl border border-white/12 bg-white/5 p-6 backdrop-blur-sm sm:p-8"

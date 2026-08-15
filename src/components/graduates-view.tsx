@@ -81,7 +81,7 @@ const GRADUATES_ARCHIVE: GraduateProfile[] = [
   },
 ];
 
-export function GraduatesView() {
+export function GraduatesView({ graduates = GRADUATES_ARCHIVE }: { graduates?: GraduateProfile[] }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeProfile, setActiveProfile] =
     useState<GraduateProfile | null>(null);
@@ -91,8 +91,8 @@ export function GraduatesView() {
 
   const filteredGraduates = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return GRADUATES_ARCHIVE;
-    return GRADUATES_ARCHIVE.filter(
+    if (!q) return graduates;
+    return graduates.filter(
       (g) =>
         g.name.toLowerCase().includes(q) ||
         g.nickname.toLowerCase().includes(q) ||
@@ -100,7 +100,20 @@ export function GraduatesView() {
         g.skillsHobbies.toLowerCase().includes(q) ||
         g.departmentFriends.some((f) => f.toLowerCase().includes(q))
     );
-  }, [searchQuery]);
+  }, [graduates, searchQuery]);
+
+  // History API for Swipe-to-Close
+  const historyPushedRef = useRef(false);
+
+  const closeProfile = () => {
+    if (historyPushedRef.current) {
+      window.history.back();
+      historyPushedRef.current = false;
+    } else {
+      setActiveProfile(null);
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  };
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -125,23 +138,10 @@ export function GraduatesView() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeProfile]);
 
-  // History API for Swipe-to-Close
-  const historyPushedRef = useRef(false);
-
   const openProfile = (grad: GraduateProfile) => {
     setActiveProfile(grad);
     window.history.pushState(null, "", `#${grad.id}`);
     historyPushedRef.current = true;
-  };
-
-  const closeProfile = () => {
-    if (historyPushedRef.current) {
-      window.history.back();
-      historyPushedRef.current = false;
-    } else {
-      setActiveProfile(null);
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    }
   };
 
   useEffect(() => {
@@ -283,6 +283,7 @@ export function GraduatesView() {
                         src={grad.imageSrc}
                         alt={grad.alt}
                         fill
+                        unoptimized
                         sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 33vw"
                         className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
                       />
@@ -331,6 +332,7 @@ export function GraduatesView() {
               src={activeProfile.imageSrc}
               alt={activeProfile.alt}
               fill
+              unoptimized
               priority
               className="object-cover object-top"
             />
@@ -422,6 +424,7 @@ export function GraduatesView() {
                   src={activeProfile.imageSrc}
                   alt={activeProfile.alt}
                   fill
+                  unoptimized
                   priority
                   sizes="45vw"
                   className="object-cover object-top"
