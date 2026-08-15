@@ -63,15 +63,46 @@ export function HomeOpening() {
 
         const width =
           viewportWidth < 640
-            ? Math.min(viewportWidth * 0.84, 420)
+            ? Math.min(viewportWidth * 0.8, 350)
             : viewportWidth < 1024
-              ? Math.min(viewportWidth * 0.52, 440)
-              : Math.min(viewportWidth * 0.255, 400);
+              ? Math.min(viewportWidth * 0.45, 380)
+              : Math.min(viewportWidth * 0.22, 330);
 
         return {
           width,
           height: width * 0.56,
-          top: Math.max(viewportHeight * (viewportWidth < 640 ? 0.12 : 0.1), 56),
+          top: Math.max(viewportHeight * (viewportWidth < 640 ? 0.05 : 0.04), 16),
+        };
+      };
+
+      const storyCard = () => {
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        if (viewportWidth < 768) {
+          const width = Math.min(viewportWidth * 0.86, 400);
+          return {
+            width,
+            height: width * 0.58,
+            top: `${Math.max(viewportHeight * 0.04, 16)}px`,
+            left: "50%",
+            xPercent: -50,
+            yPercent: 0,
+          };
+        }
+
+        const width =
+          viewportWidth < 1280
+            ? Math.min(viewportWidth * 0.45, 540)
+            : Math.min(viewportWidth * 0.44, 640);
+
+        return {
+          width,
+          height: width * 0.62,
+          top: "50%",
+          left: viewportWidth < 1280 ? "68%" : "66%",
+          xPercent: -50,
+          yPercent: -50,
         };
       };
 
@@ -90,7 +121,12 @@ export function HomeOpening() {
         });
         gsap.set(layers, {
           autoAlpha: 0,
-          scale: 0.9,
+          top: () => compactCard().top,
+          left: "50%",
+          width: () => compactCard().width,
+          height: () => compactCard().height,
+          xPercent: -50,
+          yPercent: 0,
           transformOrigin: "50% 50%",
         });
         gsap.set(lineOverlay, {
@@ -122,11 +158,11 @@ export function HomeOpening() {
           .to(
             stage,
             {
-              height: "100svh",
               backgroundColor: "#000000",
-              duration: 0.14,
+              duration: 0.45,
+              ease: "power2.inOut",
             },
-            0,
+            0.06,
           )
           .to(
             copy,
@@ -154,6 +190,7 @@ export function HomeOpening() {
               width: () => compactCard().width,
               height: () => compactCard().height,
               xPercent: -50,
+              yPercent: 0,
               borderRadius: () => (window.innerWidth < 640 ? 18 : 22),
               duration: 0.5,
               ease: "power2.inOut",
@@ -191,14 +228,34 @@ export function HomeOpening() {
             0.82,
           )
           .to(
+            card,
+            {
+              top: () => storyCard().top,
+              left: () => storyCard().left,
+              width: () => storyCard().width,
+              height: () => storyCard().height,
+              xPercent: () => storyCard().xPercent,
+              yPercent: () => storyCard().yPercent,
+              borderRadius: () => (window.innerWidth < 640 ? 18 : 24),
+              duration: 0.44,
+              ease: "power2.inOut",
+            },
+            0.82,
+          )
+          .to(
             layers,
             {
+              top: () => storyCard().top,
+              left: () => storyCard().left,
+              width: () => storyCard().width,
+              height: () => storyCard().height,
+              xPercent: () => storyCard().xPercent,
+              yPercent: () => storyCard().yPercent,
               autoAlpha: 1,
-              scale: 1,
-              duration: 0.38,
-              ease: "power2.out",
+              duration: 0.44,
+              ease: "power2.inOut",
             },
-            0.9,
+            0.82,
           )
           .to(
             story,
@@ -214,10 +271,10 @@ export function HomeOpening() {
             lineOverlay,
             {
               autoAlpha: 1,
-              duration: 0.26,
+              duration: 0.28,
               ease: "power2.out",
             },
-            0.98,
+            0.96,
           )
           .to(story, { autoAlpha: 1, duration: 0.36 }, 1.24);
       }, track);
@@ -250,22 +307,25 @@ export function HomeOpening() {
       data-hero-track
       className="relative h-[420svh] bg-black"
     >
+      {/* White cover at the bottom of the track so the black doesn't bleed into the next section */}
+      <div className="absolute bottom-0 left-0 right-0 h-[100svh] bg-white" />
+      <span id="class" aria-hidden="true" className="absolute top-[330svh]" />
       <div
         ref={stageRef}
         data-hero-stage
-        className="sticky top-0 h-[calc(100svh-var(--nav-height))] w-full overflow-hidden bg-white will-change-[height,background-color]"
+        className="sticky top-[var(--nav-height)] h-[calc(100dvh-var(--nav-height))] w-full overflow-hidden bg-white will-change-[background-color]"
       >
         <div
           ref={layersRef}
           aria-hidden="true"
-          className="invisible pointer-events-none absolute top-[6svh] left-1/2 z-[5] aspect-[1.65] w-[92vw] -translate-x-1/2 opacity-0 sm:w-[62vw] md:w-[48vw] lg:w-[30vw] lg:max-w-[27rem]"
+          className="invisible pointer-events-none absolute z-[5] opacity-0 will-change-[top,left,width,height,transform]"
         >
-          <div className="absolute inset-[7%_1%_1%_8%] rounded-[1.4rem] border border-white/12" />
-          <div className="absolute inset-[1%_8%_8%_1%] -rotate-[2.5deg] rounded-[1.4rem] border border-white/18" />
-          <div className="absolute inset-[13%_-2%_-3%_13%] rotate-[3deg] rounded-[1.4rem] border border-white/9" />
-          <div className="absolute top-[18%] right-[5%] bottom-[7%] left-[16%] rounded-[1.2rem] border border-white/8" />
-          <span className="absolute top-[3%] left-[5%] h-1.5 w-1.5 rounded-full bg-white/45" />
-          <span className="absolute right-[4%] bottom-[5%] h-1.5 w-1.5 rounded-full bg-white/25" />
+          <div className="absolute inset-[-5%] rounded-[1.6rem] border border-white/12" />
+          <div className="absolute inset-[-8%_-3%_-3%_-8%] -rotate-[2.5deg] rounded-[1.6rem] border border-white/18" />
+          <div className="absolute inset-[-3%_-8%_-8%_-3%] rotate-[3deg] rounded-[1.6rem] border border-white/9" />
+          <div className="absolute inset-[-2%] rounded-[1.4rem] border border-white/8" />
+          <span className="absolute -top-3 -left-3 h-1.5 w-1.5 rounded-full bg-white/45" />
+          <span className="absolute -bottom-3 -right-3 h-1.5 w-1.5 rounded-full bg-white/25" />
         </div>
 
         <div
@@ -278,11 +338,11 @@ export function HomeOpening() {
             className="absolute inset-0 animate-hero-media will-change-transform"
           >
             <Image
-              src="/images/hero-class.jpg"
-              alt="Cinematic dusk view over campus and petroleum industry silhouettes — placeholder for the Algorithm Class of 2026 group portrait"
+              src="/images/hero-bg.webp"
+              alt="The Algorithm Class of 2026 gathered in front of the College of Science building"
               fill
               priority
-              sizes="(max-width: 639px) 84vw, (max-width: 1023px) 52vw, 100vw"
+              sizes="100vw"
               className="object-cover object-center"
             />
           </div>
@@ -322,7 +382,7 @@ export function HomeOpening() {
                 We came as students. We leave as The Algorithm.
               </h1>
               <p className="animate-hero-rise-delay mt-5 max-w-xl text-[clamp(0.95rem,0.85rem+0.5vw,1.125rem)] leading-relaxed text-white/78 sm:mt-6">
-                The FUPRE Class of 2026 — remembered together.
+                The FUPRE Class of 2026 - remembered together.
               </p>
             </div>
           </div>
@@ -381,10 +441,10 @@ export function HomeOpening() {
         >
           <section
             aria-labelledby="class-story-heading"
-            className="relative flex h-full items-end px-6 pt-[42svh] pb-[6svh] text-white sm:px-10 sm:pb-[7svh] md:items-center md:px-[9.5vw] md:pt-0 md:pb-0"
+            className="relative flex h-full items-end px-6 pb-6 text-white sm:px-10 sm:pb-8 md:items-center md:px-[9.5vw] md:pb-0"
           >
             <div className="w-full max-w-[22rem] md:translate-y-[3svh]">
-              <p className="text-[0.68rem] font-medium tracking-[0.2em] text-white/48 uppercase sm:text-[0.72rem]">
+              <p className="text-[0.68rem] font-medium tracking-[0.2em] text-white/68 uppercase sm:text-[0.72rem]">
                 The class
               </p>
               <h2
@@ -393,14 +453,14 @@ export function HomeOpening() {
               >
                 The people behind the Algorithm.
               </h2>
-              <p className="mt-5 max-w-[21rem] text-sm leading-6 text-white/58 sm:text-[0.95rem] sm:leading-7">
+              <p className="mt-5 max-w-[21rem] text-sm leading-6 text-white/72 sm:text-[0.95rem] sm:leading-7">
                 A graduating class shaped by late nights, shared deadlines,
                 inside jokes, and the courage to keep building. Every name
                 carries a part of the story.
               </p>
 
               <Link
-                href="/graduates"
+                href="#class"
                 className="mt-6 inline-flex min-h-11 items-center justify-center rounded-sm bg-[#123f31] px-5 text-[0.72rem] font-medium tracking-[0.08em] text-white uppercase transition-colors hover:bg-[#195542] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white sm:mt-7"
               >
                 Meet the graduates

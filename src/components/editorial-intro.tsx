@@ -28,7 +28,7 @@ export function EditorialIntro({
       aria-labelledby="introduction-heading"
       className={
         isStage
-          ? "relative flex h-full min-h-svh items-end bg-transparent px-6 pt-[45svh] pb-[8svh] text-white sm:px-10 sm:pb-[9svh] md:px-16 lg:px-24"
+          ? "relative flex h-full w-full items-end justify-center bg-transparent px-5 pb-5 text-white sm:px-8 sm:pb-7 md:pb-8 lg:pb-10"
           : "relative min-h-svh scroll-mt-[calc(var(--nav-height)+1rem)] bg-white px-6 py-28 sm:px-10 sm:py-36 md:px-16 md:py-44 lg:px-24"
       }
     >
@@ -41,7 +41,7 @@ export function EditorialIntro({
       >
         <div className={isStage ? "" : "md:col-span-10 lg:col-span-9"}>
           <p
-            className={`text-[0.7rem] font-medium tracking-[0.18em] uppercase transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] sm:text-[0.75rem] ${
+            className={`text-[0.65rem] font-medium tracking-[0.18em] uppercase transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] sm:text-[0.72rem] ${
               isStage ? "text-white/45" : "text-muted"
             } ${
               revealed
@@ -50,14 +50,14 @@ export function EditorialIntro({
             }`}
             style={{ transitionDelay: revealed ? "0ms" : "0ms" }}
           >
-            FUPRE · Class of 2026
+            FUPRE / Class of 2026
           </p>
 
           <h2
             id="introduction-heading"
-            className={`font-display leading-[1.12] font-medium tracking-[-0.03em] ${
+            className={`font-display leading-[1.08] font-medium tracking-[-0.035em] ${
               isStage
-                ? "mt-5 text-[clamp(1.75rem,1.15rem+2.5vw,3rem)] text-white sm:mt-6"
+                ? "mt-3 text-[clamp(1.45rem,1.05rem+1.8vw,2.5rem)] text-white sm:mt-4"
                 : "mt-8 text-[clamp(2rem,1.2rem+3.4vw,3.75rem)] text-foreground sm:mt-10"
             }`}
           >
@@ -84,7 +84,11 @@ export function EditorialIntro({
           </h2>
 
           <p
-            className={`${isStage ? "mx-auto mt-5 text-[0.95rem] text-white/58 sm:mt-6 sm:text-base" : "mt-8 text-[1.05rem] text-muted sm:mt-10 sm:text-[1.125rem] sm:leading-8"} max-w-xl leading-relaxed transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+            className={`${
+              isStage
+                ? "mx-auto mt-3 max-w-lg text-[0.825rem] text-white/65 sm:mt-4 sm:text-[0.925rem] leading-relaxed"
+                : "mt-8 text-[1.05rem] text-muted sm:mt-10 sm:text-[1.125rem] sm:leading-8 max-w-xl"
+            } leading-relaxed transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
               revealed
                 ? "translate-y-0 opacity-100"
                 : "translate-y-4 opacity-0"
@@ -94,7 +98,7 @@ export function EditorialIntro({
             }}
           >
             The Algorithm 26 preserves the people, memories, and milestones of
-            the FUPRE graduating class — a shared journey held together so we
+            the FUPRE graduating class - a shared journey held together so we
             can return to it, long after the ceremonies end.
           </p>
         </div>

@@ -32,7 +32,7 @@ const aeonik = localFont({
 export const metadata: Metadata = {
   title: "The Algorithm 26 | FUPRE Class of 2026",
   description:
-    "The digital yearbook for the FUPRE Algorithm Class of 2026 — graduates, shared photographs, and the class story.",
+    "The digital yearbook for the FUPRE Algorithm Class of 2026 - graduates, shared photographs, and the class story.",
 };
 
 export default function RootLayout({
