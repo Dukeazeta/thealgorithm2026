@@ -118,12 +118,42 @@ export function GraduatesView() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setActiveProfile(null);
+        closeProfile();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [activeProfile]);
+
+  // History API for Swipe-to-Close
+  const historyPushedRef = useRef(false);
+
+  const openProfile = (grad: GraduateProfile) => {
+    setActiveProfile(grad);
+    window.history.pushState(null, "", `#${grad.id}`);
+    historyPushedRef.current = true;
+  };
+
+  const closeProfile = () => {
+    if (historyPushedRef.current) {
+      window.history.back();
+      historyPushedRef.current = false;
+    } else {
+      setActiveProfile(null);
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (activeProfile && window.location.hash !== `#${activeProfile.id}`) {
+        setActiveProfile(null);
+        historyPushedRef.current = false;
+      }
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [activeProfile]);
 
   // True Inner-Image Parallax Effect
   useEffect(() => {
@@ -240,7 +270,7 @@ export function GraduatesView() {
               {filteredGraduates.map((grad) => (
                 <div
                   key={grad.id}
-                  onClick={() => setActiveProfile(grad)}
+                  onClick={() => openProfile(grad)}
                   className="group cursor-pointer"
                 >
                   {/* Poster Image with Parallax */}
@@ -280,130 +310,208 @@ export function GraduatesView() {
         </div>
       </section>
 
-      {/* Full-Screen Modal Sheet (No Cards Inside) */}
+      {/* Full-Screen Modal */}
       {activeProfile && (
         <div
           role="dialog"
           aria-modal="true"
           aria-label={`${activeProfile.name} Profile`}
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm sm:flex sm:items-center sm:justify-center sm:p-6 lg:p-10"
-          onClick={() => setActiveProfile(null)}
+          className="fixed inset-0 z-50 bg-black lg:bg-black/80 lg:backdrop-blur-md lg:p-6 xl:p-10"
+          style={{ animation: "fadeIn 0.3s ease-out forwards" }}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative flex h-full w-full flex-col overflow-hidden bg-white text-foreground sm:h-auto sm:max-h-[88vh] sm:max-w-5xl sm:rounded-2xl sm:shadow-2xl"
+          <style>{`
+            @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+            @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+            @keyframes scaleUp { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+          `}</style>
+
+          {/* MOBILE FULL-SCREEN BACKGROUND IMAGE */}
+          <div className="absolute inset-0 z-0 lg:hidden">
+            <Image
+              src={activeProfile.imageSrc}
+              alt={activeProfile.alt}
+              fill
+              priority
+              className="object-cover object-top"
+            />
+            {/* Gradient overlay at bottom to ensure image fades cleanly into drawer */}
+            <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+          </div>
+
+          {/* MOBILE CLOSE BUTTON */}
+          <button
+            type="button"
+            onClick={closeProfile}
+            className="absolute right-5 top-5 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-md transition-colors hover:bg-black/40 lg:hidden"
+            aria-label="Close modal"
           >
-            {/* Minimal Top Bar */}
-            <div className="flex shrink-0 items-center justify-between border-b border-black/10 px-4 py-2.5 sm:px-6 sm:py-3">
-              <p className="text-[0.65rem] font-medium tracking-[0.15em] text-muted uppercase">
-                NACOS FUPRE · Class of 2026
-              </p>
-              <button
-                type="button"
-                onClick={() => setActiveProfile(null)}
-                className="flex h-7 w-7 items-center justify-center rounded-full text-muted transition-colors hover:bg-black/5 hover:text-foreground"
-                aria-label="Close modal"
+            <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 stroke-current stroke-2">
+              <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
+            </svg>
+          </button>
+
+          {/* MOBILE INTERACTIVE DRAWER (Scroll Container) */}
+          <div className="absolute inset-0 z-10 overflow-y-auto overflow-x-hidden scroll-smooth lg:hidden">
+            <div className="flex min-h-[100dvh] flex-col">
+              {/* Spacer - Clicking it closes the modal */}
+              <div
+                className="h-[55dvh] w-full shrink-0"
+                onClick={closeProfile}
+              />
+
+              {/* The White Drawer */}
+              <div
+                className="relative flex-1 shrink-0 rounded-t-3xl bg-white shadow-2xl"
+                style={{ animation: "slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards" }}
               >
-                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 stroke-current stroke-2">
-                  <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
+                {/* Drag Handle */}
+                <div className="absolute left-1/2 top-3 h-1.5 w-12 -translate-x-1/2 rounded-full bg-black/15" />
 
-            {/* Content: stacks on mobile, side-by-side on desktop */}
-            <div className="flex flex-1 flex-col overflow-y-auto lg:flex-row lg:overflow-hidden">
-              {/* Image */}
-              <div className="relative shrink-0 bg-[#070e0a] lg:w-[42%]">
-                <div className="relative aspect-[4/5] w-full lg:h-full lg:aspect-auto">
-                  <Image
-                    src={activeProfile.imageSrc}
-                    alt={activeProfile.alt}
-                    fill
-                    priority
-                    sizes="(max-width: 1024px) 100vw, 42vw"
-                    className="object-cover object-top lg:object-contain"
-                  />
-                </div>
-              </div>
-
-              {/* Dossier — pure divide-y, zero nested cards */}
-              <div className="flex-1 divide-y divide-black/10 overflow-y-auto lg:overflow-y-auto">
-                {/* Identity */}
-                <div className="px-5 py-5 sm:px-8 sm:py-6">
-                  <h2 className="font-display text-xl font-medium tracking-tight text-foreground sm:text-2xl">
+                {/* Mobile Header */}
+                <div className="px-6 pb-6 pt-10 text-center">
+                  <h2 className="font-display text-3xl font-medium leading-[1.05] tracking-tight text-foreground">
                     {activeProfile.name}
                   </h2>
-                  <p className="mt-1 text-xs text-muted">
-                    &ldquo;{activeProfile.nickname}&rdquo; · Born {activeProfile.dob}
+                  <p className="mt-2 text-sm text-muted">
+                    &ldquo;{activeProfile.nickname}&rdquo;
+                  </p>
+                  <p className="mt-4 flex items-center justify-center gap-2 text-[0.65rem] font-medium uppercase tracking-[0.2em] text-muted">
+                    <span>Swipe up for details</span>
+                    <svg
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      className="h-3 w-3 animate-bounce stroke-current stroke-2"
+                    >
+                      <path d="M8 13V3m0 0L4 7m4-4l4 4" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
                   </p>
                 </div>
 
-                {/* Quote */}
-                <div className="px-5 py-4 sm:px-8 sm:py-5">
-                  <p className="text-[0.6rem] font-semibold tracking-widest text-muted uppercase">
-                    Favourite Quote
-                  </p>
-                  <p className="mt-1 font-display text-sm italic leading-snug text-foreground sm:text-base">
-                    &ldquo;{activeProfile.favouriteQuote}&rdquo;
-                  </p>
-                </div>
-
-                {/* Advice */}
-                <div className="px-5 py-4 sm:px-8 sm:py-5">
-                  <p className="text-[0.6rem] font-semibold tracking-widest text-muted uppercase">
-                    Advice to Younger Level
-                  </p>
-                  <p className="mt-1 text-xs leading-relaxed text-foreground/85 sm:text-sm">
-                    &ldquo;{activeProfile.adviceToYoungerLevel}&rdquo;
-                  </p>
-                </div>
-
-                {/* Profile Attributes — flat definition list */}
-                <div className="px-5 py-4 sm:px-8 sm:py-5">
-                  <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-xs sm:grid-cols-3">
-                    <div>
-                      <dt className="text-[0.6rem] text-muted uppercase">Skills</dt>
-                      <dd className="font-medium">{activeProfile.skillsHobbies}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-[0.6rem] text-muted uppercase">Fav. Lecturer</dt>
-                      <dd className="font-medium">{activeProfile.favoriteLecturer}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-[0.6rem] text-muted uppercase">Best / Worst Level</dt>
-                      <dd className="font-medium">
-                        {activeProfile.favoriteLevel}L / {activeProfile.worstLevel}L
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[0.6rem] text-muted uppercase">If Not Comp Sci</dt>
-                      <dd className="font-medium">{activeProfile.ifNotComputerScience}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-[0.6rem] text-muted uppercase">Stay or Japa</dt>
-                      <dd className="font-semibold text-[#123f31]">{activeProfile.stayOrJapa}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-[0.6rem] text-muted uppercase">Fav. Colour</dt>
-                      <dd className="font-medium">{activeProfile.favouriteColour}</dd>
-                    </div>
-                  </dl>
-                </div>
-
-                {/* Friends */}
-                <div className="px-5 py-4 sm:px-8 sm:py-5">
-                  <p className="text-[0.6rem] font-semibold tracking-widest text-muted uppercase">
-                    Department Friends
-                  </p>
-                  <p className="mt-1 text-xs text-foreground">
-                    {activeProfile.departmentFriends.join(", ")}
-                  </p>
+                <div className="divide-y divide-black/10">
+                  <DossierContent profile={activeProfile} />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* DESKTOP SPLIT-SCREEN MODAL */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="hidden h-full w-full max-w-6xl mx-auto overflow-hidden rounded-2xl bg-white shadow-2xl lg:flex"
+            style={{ animation: "scaleUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards" }}
+          >
+            {/* Desktop Left: Image */}
+            <div className="relative flex w-[45%] shrink-0 flex-col bg-[#070e0a]">
+              {/* Desktop Close Button Row */}
+              <div className="absolute left-0 right-0 top-0 z-10 flex justify-between p-6">
+                <p className="text-[0.65rem] font-medium uppercase tracking-[0.15em] text-white/80 drop-shadow-md">
+                  NACOS FUPRE · 2026
+                </p>
+                <button
+                  type="button"
+                  onClick={closeProfile}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-md transition-colors hover:bg-black/40"
+                >
+                  <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 stroke-current stroke-2">
+                    <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </div>
+              <div className="relative h-full w-full">
+                <Image
+                  src={activeProfile.imageSrc}
+                  alt={activeProfile.alt}
+                  fill
+                  priority
+                  sizes="45vw"
+                  className="object-cover object-top"
+                />
+              </div>
+            </div>
+
+            {/* Desktop Right: Dossier Body */}
+            <div className="flex-1 divide-y divide-black/10 overflow-y-auto bg-white">
+              <div className="px-8 py-10">
+                <h2 className="font-display text-4xl font-medium tracking-tight text-foreground">
+                  {activeProfile.name}
+                </h2>
+                <p className="mt-2 text-sm text-muted">
+                  &ldquo;{activeProfile.nickname}&rdquo; · Born {activeProfile.dob}
+                </p>
+              </div>
+              <DossierContent profile={activeProfile} />
             </div>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+function DossierContent({ profile }: { profile: GraduateProfile }) {
+  return (
+    <>
+      {/* Quote */}
+      <div className="px-6 py-6 sm:px-8 sm:py-8">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-muted">
+          Favourite Quote
+        </p>
+        <p className="mt-3 font-display text-lg italic leading-relaxed text-foreground sm:text-xl">
+          &ldquo;{profile.favouriteQuote}&rdquo;
+        </p>
+      </div>
+
+      {/* Advice */}
+      <div className="px-6 py-6 sm:px-8 sm:py-8">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-muted">
+          Advice to Younger Level
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-foreground/85 sm:text-base">
+          &ldquo;{profile.adviceToYoungerLevel}&rdquo;
+        </p>
+      </div>
+
+      {/* Profile Attributes */}
+      <div className="px-6 py-6 sm:px-8 sm:py-8">
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-6 text-sm sm:grid-cols-3">
+          <div>
+            <dt className="text-[0.65rem] font-medium uppercase tracking-wider text-muted">Skills</dt>
+            <dd className="mt-1 font-medium text-foreground/90">{profile.skillsHobbies}</dd>
+          </div>
+          <div>
+            <dt className="text-[0.65rem] font-medium uppercase tracking-wider text-muted">Fav. Lecturer</dt>
+            <dd className="mt-1 font-medium text-foreground/90">{profile.favoriteLecturer}</dd>
+          </div>
+          <div>
+            <dt className="text-[0.65rem] font-medium uppercase tracking-wider text-muted">Best / Worst Level</dt>
+            <dd className="mt-1 font-medium text-foreground/90">
+              {profile.favoriteLevel}L / {profile.worstLevel}L
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[0.65rem] font-medium uppercase tracking-wider text-muted">If Not Comp Sci</dt>
+            <dd className="mt-1 font-medium text-foreground/90">{profile.ifNotComputerScience}</dd>
+          </div>
+          <div>
+            <dt className="text-[0.65rem] font-medium uppercase tracking-wider text-muted">Stay or Japa</dt>
+            <dd className="mt-1 font-semibold text-[#123f31]">{profile.stayOrJapa}</dd>
+          </div>
+          <div>
+            <dt className="text-[0.65rem] font-medium uppercase tracking-wider text-muted">Fav. Colour</dt>
+            <dd className="mt-1 font-medium text-foreground/90">{profile.favouriteColour}</dd>
+          </div>
+        </dl>
+      </div>
+
+      {/* Friends */}
+      <div className="px-6 py-6 sm:px-8 sm:py-8">
+        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.15em] text-muted">
+          Department Friends
+        </p>
+        <p className="mt-3 text-sm leading-relaxed text-foreground/90">
+          {profile.departmentFriends.join(", ")}
+        </p>
+      </div>
+    </>
   );
 }

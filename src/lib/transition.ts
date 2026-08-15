@@ -1,34 +1,26 @@
-type TransitionAction = "in" | "out";
-type TransitionListener = (action: TransitionAction, callback?: () => void) => void;
+type TransitionCallback = () => void;
+type TransitionHandler = (onCovered: TransitionCallback) => void;
 
-let transitionListener: TransitionListener | null = null;
+let transitionHandler: TransitionHandler | null = null;
 
 export const transitionStore = {
-  setListener: (fn: TransitionListener) => {
-    transitionListener = fn;
+  setHandler: (handler: TransitionHandler) => {
+    transitionHandler = handler;
   },
-  
-  removeListener: () => {
-    transitionListener = null;
+
+  removeHandler: () => {
+    transitionHandler = null;
   },
 
   /**
-   * Drops the curtain to obscure the viewport, then executes the callback (e.g. routing).
+   * Triggers the full-page transition curtain to cover the screen,
+   * executes the onCovered callback (e.g. router.push), and then reveals the new page.
    */
-  animateIn: (callback?: () => void) => {
-    if (transitionListener) {
-      transitionListener("in", callback);
-    } else if (callback) {
-      callback();
+  startTransition: (onCovered: TransitionCallback) => {
+    if (transitionHandler) {
+      transitionHandler(onCovered);
+    } else {
+      onCovered();
     }
   },
-
-  /**
-   * Lifts the curtain to reveal the viewport.
-   */
-  animateOut: () => {
-    if (transitionListener) {
-      transitionListener("out");
-    }
-  }
 };

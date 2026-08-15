@@ -301,7 +301,7 @@ export function HomeSections() {
             <figure className="memories-figure group relative min-h-[30rem] overflow-hidden rounded-[1.5rem] bg-black sm:min-h-[40rem] sm:rounded-[2rem] lg:min-h-[52rem]">
               <Image
                 src="/images/hero-bg.webp"
-                alt="The Algorithm Class of 2026 gathered in front of the College of Science building"
+                alt="The Algorithm Class of 2026 gathered in front of the College of Computing building"
                 fill
                 sizes="(max-width: 1023px) calc(100vw - 2rem), 61vw"
                 className="object-cover object-center transition-transform duration-1000 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.025]"
@@ -470,7 +470,7 @@ export function HomeSections() {
             <article className="bento-tile group relative min-h-[22rem] overflow-hidden bg-[#153f30] text-white sm:row-span-3 lg:col-span-2 lg:row-span-5 lg:min-h-0">
               <Image
                 src="/images/hero-bg.webp"
-                alt="The Algorithm Class of 2026 gathered in front of the College of Science building"
+                alt="The Algorithm Class of 2026 gathered in front of the College of Computing building"
                 fill
                 sizes="(max-width: 639px) calc(100vw - 2rem), (max-width: 1023px) 50vw, 38rem"
                 className="bento-img object-cover transition-transform duration-1000 ease-out group-hover:scale-105"

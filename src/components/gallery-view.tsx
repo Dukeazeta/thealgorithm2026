@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 type GalleryItem = {
   id: string;
@@ -23,22 +22,58 @@ const GALLERY_ITEMS: GalleryItem[] = [
     title: "The Algorithm: Class of 2026 Official Portrait",
     category: "Class",
     year: "2026",
-    location: "College of Science Quad, FUPRE",
+    location: "College of Computing Quad, FUPRE",
     imageSrc: "/images/hero-bg.webp",
-    alt: "The Algorithm Class of 2026 assembled in front of the College of Science building",
+    alt: "The Algorithm Class of 2026 assembled in front of the College of Computing building",
     caption:
-      "The complete graduating class gathered under the morning sky in front of the College of Science. A definitive visual testament to four years of perseverance, collaboration, and shared triumph.",
+      "The complete graduating class gathered under the morning sky in front of the College of Computing. A definitive visual testament to four years of perseverance, collaboration, and shared triumph.",
     tag: "Official Record",
     featured: true,
   },
   {
+    id: "coding-lab-session",
+    title: "Late Night Coding Lab Session",
+    category: "Labs",
+    year: "2026",
+    location: "Software Engineering Lab",
+    imageSrc: "/images/gallery/coding_lab_session.jpg",
+    alt: "Students collaborating during a late night coding session",
+    caption:
+      "Hours of debugging and collaboration. The Software Engineering lab where countless projects were born and final year defenses were prepared.",
+    tag: "Academic",
+  },
+  {
+    id: "gala-dinner-night",
+    title: "NACOS FUPRE Gala & Award Night",
+    category: "Celebrations",
+    year: "2026",
+    location: "Main Auditorium",
+    imageSrc: "/images/gallery/gala_dinner_night.jpg",
+    alt: "Students dressed up at the Gala dinner night",
+    caption:
+      "A night of elegance and celebration marking the end of a rigorous academic session. Recognizing the brightest minds in the department.",
+    tag: "Event",
+  },
+  {
+    id: "project-defence",
+    title: "Final Year Project Defence",
+    category: "Class",
+    year: "2026",
+    location: "Department of Computer Science",
+    imageSrc: "/images/gallery/project_defence.jpg",
+    alt: "Student defending their final year project",
+    caption:
+      "The culmination of four years of study. Defending our capstone projects before the faculty panel—a milestone of immense pride and relief.",
+    tag: "Milestone",
+  },
+  {
     id: "college-of-science-dusk",
-    title: "College of Science at Dusk",
+    title: "College of Computing at Dusk",
     category: "Campus",
     year: "2026",
     location: "Faculty Plaza",
     imageSrc: "/images/hero-bg.webp",
-    alt: "The College of Science building and surroundings",
+    alt: "The College of Computing building and surroundings",
     caption:
       "The heart of our academic journey. The halls where our first C programming lectures were held and where our final capstone presentations concluded.",
     tag: "Landmark",
@@ -89,15 +124,91 @@ export function GalleryView() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  function getGridClasses(index: number) {
+    const pattern = [
+      // 0: Large square on mobile | Large square on desktop
+      "col-span-2 row-span-2 md:col-span-2 md:row-span-2",
+      // 1: Vertical rectangle on mobile | Small square on desktop
+      "col-span-1 row-span-2 md:col-span-1 md:row-span-1",
+      // 2: Small square on mobile | Vertical rectangle on desktop
+      "col-span-1 row-span-1 md:col-span-1 md:row-span-2",
+      // 3: Small square on mobile | Small square on desktop
+      "col-span-1 row-span-1 md:col-span-1 md:row-span-1",
+      // 4: Horizontal rectangle on mobile | Wide rectangle on desktop
+      "col-span-2 row-span-1 md:col-span-2 md:row-span-1",
+      // 5: Small square on mobile | Small square on desktop
+      "col-span-1 row-span-1 md:col-span-1 md:row-span-1",
+      // 6: Vertical rectangle on mobile | Small square on desktop
+      "col-span-1 row-span-2 md:col-span-1 md:row-span-1",
+    ];
+    return pattern[index % pattern.length];
+  }
+
+  const containerRef = useRef<HTMLElement>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
+
   const filteredItems =
     selectedCategory === "All"
       ? GALLERY_ITEMS
       : GALLERY_ITEMS.filter((item) => item.category === selectedCategory);
 
+  // Column Parallax Effect
+  useEffect(() => {
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
+
+    async function initParallax() {
+      const [{ gsap }, { ScrollTrigger }] = await Promise.all([
+        import("gsap"),
+        import("gsap/ScrollTrigger"),
+      ]);
+
+      if (cancelled) return;
+      gsap.registerPlugin(ScrollTrigger);
+
+      const ctx = gsap.context(() => {
+        if (!containerRef.current) return;
+        
+        const items = containerRef.current.querySelectorAll<HTMLElement>("[data-parallax-item]");
+        
+        items.forEach((item) => {
+          const imgWrapper = item.querySelector<HTMLElement>("[data-parallax-img]");
+          if (!imgWrapper) return;
+          
+          gsap.fromTo(
+            imgWrapper,
+            { yPercent: -15 },
+            {
+              yPercent: 15,
+              ease: "none",
+              scrollTrigger: {
+                trigger: item,
+                start: "top bottom",
+                end: "bottom top",
+                scrub: true,
+              },
+            }
+          );
+        });
+      }, containerRef);
+
+      cleanup = () => ctx.revert();
+    }
+
+    void initParallax();
+
+    return () => {
+      cancelled = true;
+      cleanup?.();
+    };
+  }, [filteredItems]);
+
+
+
   return (
     <div className="bg-[#efeee8] text-foreground">
       {/* Gallery Header */}
-      <section className="relative overflow-hidden bg-white px-4 pt-16 pb-16 sm:px-6 sm:pt-24 sm:pb-24 lg:px-8 lg:pt-32 lg:pb-28">
+      <section className="relative overflow-hidden bg-white px-4 pt-8 pb-12 sm:px-6 sm:pt-12 sm:pb-16 lg:px-8 lg:pt-16 lg:pb-20">
         <div className="mx-auto max-w-[96rem]">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
@@ -158,7 +269,7 @@ export function GalleryView() {
           >
             <Image
               src="/images/hero-bg.webp"
-              alt="The Algorithm Class of 2026 group in front of the College of Science building"
+              alt="The Algorithm Class of 2026 group in front of the College of Computing building"
               fill
               priority
               sizes="(max-width: 1536px) 100vw, 1536px"
@@ -177,7 +288,7 @@ export function GalleryView() {
 
             <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-10 lg:p-14">
               <p className="text-[0.68rem] font-medium tracking-[0.18em] text-white/70 uppercase">
-                College of Science Quadrangle · 2026
+                College of Computing Quadrangle · 2026
               </p>
               <h2 className="mt-3 max-w-4xl font-display text-[clamp(2rem,1.5rem+2.8vw,4rem)] leading-[1] font-medium tracking-[-0.045em] text-balance">
                 The Algorithm: Full Departmental Assemble
@@ -192,58 +303,16 @@ export function GalleryView() {
       </section>
 
       {/* Dynamic Gallery Masonry / Grid */}
-      <section className="px-4 py-12 sm:px-6 lg:px-8 lg:py-20">
+      <section ref={containerRef} className="px-4 py-8 sm:px-6 lg:px-8 lg:py-16">
         <div className="mx-auto max-w-[96rem]">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredItems.map((item) => (
-              <article
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[10rem] sm:auto-rows-[12rem] md:auto-rows-[16rem] lg:auto-rows-[20rem] grid-flow-row-dense gap-[2px]">
+            {filteredItems.map((item, index) => (
+              <GalleryCard
                 key={item.id}
+                item={item}
+                className={getGridClasses(index)}
                 onClick={() => setActiveItem(item)}
-                className="group flex cursor-pointer flex-col overflow-hidden rounded-[1.75rem] border border-black/8 bg-white shadow-sm"
-              >
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-black/5">
-                  <Image
-                    src={item.imageSrc}
-                    alt={item.alt}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-cover object-center"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className="rounded-md bg-black/60 px-2.5 py-1 text-[0.625rem] font-medium tracking-wider text-white uppercase backdrop-blur-sm">
-                      {item.tag}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-1 flex-col justify-between p-6 sm:p-7">
-                  <div>
-                    <div className="flex items-center justify-between text-[0.68rem] font-medium tracking-wider text-muted uppercase">
-                      <span>{item.category}</span>
-                      <span>{item.year}</span>
-                    </div>
-
-                    <h3 className="mt-3 font-display text-xl leading-snug font-medium tracking-[-0.03em] text-foreground sm:text-2xl">
-                      {item.title}
-                    </h3>
-
-                    <p className="mt-3 text-xs text-muted">
-                      Location: {item.location}
-                    </p>
-
-                    <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-foreground/75">
-                      {item.caption}
-                    </p>
-                  </div>
-
-                  <div className="mt-6 flex items-center justify-between border-t border-black/8 pt-4 text-xs font-semibold text-[#123f31]">
-                    <span>Inspect Memory</span>
-                    <span className="transition-transform duration-300 group-hover:translate-x-1">
-                      →
-                    </span>
-                  </div>
-                </div>
-              </article>
+              />
             ))}
           </div>
         </div>
@@ -268,7 +337,7 @@ export function GalleryView() {
 
             <div className="grid gap-4 sm:grid-cols-2 lg:col-span-7">
               {[
-                { title: "01 · Campus Life", count: "FUPRE Landmarks", desc: "The walkways, cafeteria runs, and College of Science quads." },
+                { title: "01 · Campus Life", count: "FUPRE Landmarks", desc: "The walkways, cafeteria runs, and College of Computing quads." },
                 { title: "02 · Classrooms & Labs", count: "Academic Vault", desc: "Late night coding sessions, whiteboard algorithms, and project demos." },
                 { title: "03 · Gala & Dinners", count: "Social Records", desc: "Award banquets, departmental dinners, and celebration attire." },
                 { title: "04 · Sign-Out & Legacy", count: "Graduation Moments", desc: "White shirt signatures, final year project defense, and farewells." },
@@ -463,5 +532,32 @@ export function GalleryView() {
         </div>
       )}
     </div>
+  );
+}
+
+function GalleryCard({ item, onClick, className }: { item: GalleryItem; onClick: () => void; className?: string }) {
+  return (
+    <article
+      onClick={onClick}
+      className={`group relative cursor-pointer overflow-hidden w-full h-full ${className || ""}`}
+    >
+      <div className="relative w-full h-full overflow-hidden bg-black/5" data-parallax-item>
+        <div className="absolute -inset-[20%] h-[140%] w-[140%] will-change-transform" data-parallax-img>
+          <Image
+            src={item.imageSrc}
+            alt={item.alt}
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110"
+          />
+        </div>
+        <div className="absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/30 z-10" />
+        <div className="absolute left-4 top-4 z-20">
+          <span className="rounded-md bg-white/90 px-2.5 py-1 text-[0.625rem] font-bold uppercase tracking-[0.15em] text-black backdrop-blur-md opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            {item.title}
+          </span>
+        </div>
+      </div>
+    </article>
   );
 }

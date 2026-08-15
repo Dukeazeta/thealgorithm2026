@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { TransitionLink as Link } from "@/components/transition-link";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -28,9 +28,9 @@ const CHAPTERS: StoryChapter[] = [
     level: "100 Level",
     title: "The Genesis",
     eyebrow: "Orientation & First Code",
-    headline: "Strangers gathered at the College of Science.",
+    headline: "Strangers gathered at the College of Computing.",
     narrative: [
-      "We arrived with fresh admission letters, varied expectations, and diverse backgrounds from across the country. Our first lectures inside the College of Science were packed to the brim.",
+      "We arrived with fresh admission letters, varied expectations, and diverse backgrounds from across the country. Our first lectures inside the College of Computing were packed to the brim.",
       "From Introduction to Computing and basic mathematics to writing our very first `printf('Hello, World!\\n');`, we slowly learned that Computer Science was less about typing and more about learning how to think.",
       "The confusion was mutual, the hall migrations under the hot sun were relentless, but in those crowded lecture halls, the first friendships of a lifetime took root.",
     ],
@@ -91,7 +91,7 @@ const CHAPTERS: StoryChapter[] = [
     headline: "The final projects, the defence, and the legacy sealed.",
     narrative: [
       "Our final year was the culmination of every sacrifice. Final year project defence, late nights refining neural network architectures, distributed databases, and complex web ecosystems.",
-      "From departmental elections to NACOS dinner celebrations, sign-out shirts, and the iconic class photograph in front of the College of Science building, every day felt historic.",
+      "From departmental elections to NACOS dinner celebrations, sign-out shirts, and the iconic class photograph in front of the College of Computing building, every day felt historic.",
       "We came as individual students seeking a degree. We walk out into the world as 'The Algorithm' — resilient, bonded, and ready to lead the future.",
     ],
     keyCourses: ["CSC 401 · Computer Networks & Security", "CSC 405 · Cloud Computing & Systems", "CSC 499 · Final Year Capstone Research", "CSC 411 · Machine Learning"],
@@ -184,7 +184,7 @@ export function StoryView() {
           <div className="relative min-h-[26rem] overflow-hidden rounded-[1.75rem] bg-black sm:min-h-[36rem] lg:min-h-[44rem]">
             <Image
               src="/images/hero-bg.webp"
-              alt="The Algorithm Class of 2026 assembled at the College of Science"
+              alt="The Algorithm Class of 2026 assembled at the College of Computing"
               fill
               priority
               sizes="(max-width: 1536px) 100vw, 1536px"
@@ -193,7 +193,7 @@ export function StoryView() {
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.15)_0%,rgba(0,0,0,0.4)_50%,rgba(0,0,0,0.85)_100%)]" />
             
             <div className="absolute inset-x-0 top-0 flex items-center justify-between p-6 text-[0.68rem] font-medium tracking-[0.16em] text-white/80 uppercase sm:p-8">
-              <span>College of Science · FUPRE</span>
+              <span>College of Computing · FUPRE</span>
               <span>The Algorithm 2026</span>
             </div>
 
@@ -205,7 +205,7 @@ export function StoryView() {
                 Every face in this frame contributed to the story.
               </h2>
               <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/78 sm:text-base">
-                Gathered in front of the landmark College of Science building,
+                Gathered in front of the landmark College of Computing building,
                 marking the culmination of an extraordinary academic passage.
               </p>
             </div>

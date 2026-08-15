@@ -339,7 +339,7 @@ export function HomeOpening() {
           >
             <Image
               src="/images/hero-bg.webp"
-              alt="The Algorithm Class of 2026 gathered in front of the College of Science building"
+              alt="The Algorithm Class of 2026 gathered in front of the College of Computing building"
               fill
               priority
               sizes="100vw"
