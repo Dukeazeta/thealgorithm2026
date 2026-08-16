@@ -1,7 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type TouchEvent as ReactTouchEvent,
+} from "react";
 
 type GalleryItem = {
   id: string;
@@ -108,6 +116,14 @@ const GALLERY_ITEMS: GalleryItem[] = [
 ];
 
 const CATEGORIES = ["All", "Class", "Campus", "Labs", "Celebrations"] as const;
+const IMAGE_BLUR_DATA_URL =
+  "data:image/webp;base64,UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA";
+
+function touchDistance(touches: ReactTouchEvent<HTMLDivElement>["touches"]) {
+  const first = touches[0];
+  const second = touches[1];
+  return Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY);
+}
 
 export function GalleryView({
   items = GALLERY_ITEMS,
@@ -215,19 +231,14 @@ export function GalleryView({
     // ~15% wide horizontal 2x1 strips
     // ~45% standard 1x1 cells (breathing room)
     if (bucket < 12) {
-      // Large square
       return "col-span-2 row-span-2";
     } else if (bucket < 25) {
-      // Tall vertical (3 rows)
-      return "col-span-1 row-span-3";
+      return "col-span-1 row-span-2 md:row-span-3";
     } else if (bucket < 40) {
-      // Tall vertical (2 rows)
       return "col-span-1 row-span-2";
     } else if (bucket < 55) {
-      // Wide horizontal
       return "col-span-2 row-span-1";
     } else {
-      // Standard cell
       return "col-span-1 row-span-1";
     }
   }
@@ -235,10 +246,67 @@ export function GalleryView({
   const containerRef = useRef<HTMLElement>(null);
 
   const galleryItems = loadedItems;
-  const filteredItems =
-    selectedCategory === "All"
-      ? galleryItems
-      : galleryItems.filter((item) => item.category === selectedCategory);
+  const filteredItems = useMemo(
+    () =>
+      selectedCategory === "All"
+        ? galleryItems
+        : galleryItems.filter((item) => item.category === selectedCategory),
+    [galleryItems, selectedCategory],
+  );
+  const activeIndex = activeItem
+    ? filteredItems.findIndex((item) => item.id === activeItem.id)
+    : -1;
+
+  const showRelativeItem = useCallback(
+    (direction: -1 | 1) => {
+      if (activeIndex < 0 || filteredItems.length < 2) return;
+      const nextIndex =
+        (activeIndex + direction + filteredItems.length) % filteredItems.length;
+      setActiveItem(filteredItems[nextIndex]);
+    },
+    [activeIndex, filteredItems],
+  );
+
+  useEffect(() => {
+    if (!activeItem) return;
+
+    const handleLightboxKeys = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") showRelativeItem(-1);
+      if (event.key === "ArrowRight") showRelativeItem(1);
+    };
+
+    window.addEventListener("keydown", handleLightboxKeys);
+    return () => window.removeEventListener("keydown", handleLightboxKeys);
+  }, [activeItem, showRelativeItem]);
+
+  useEffect(() => {
+    const cards = containerRef.current?.querySelectorAll<HTMLElement>(
+      '[data-gallery-card][data-revealed="false"]',
+    );
+    if (!cards?.length) return;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      cards.forEach((card) => {
+        card.dataset.revealed = "true";
+      });
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const card = entry.target as HTMLElement;
+          card.dataset.revealed = "true";
+          observer.unobserve(card);
+        });
+      },
+      { rootMargin: "120px 0px", threshold: 0.05 },
+    );
+
+    cards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, [filteredItems]);
 
   // Inner-image parallax via GSAP
   useEffect(() => {
@@ -349,7 +417,7 @@ export function GalleryView({
           </div>
 
           {/* Filter strip — flat, no pills, just underlines */}
-          <div className="mt-8 flex items-center gap-6 border-t border-zinc-200 pt-5 lg:mt-10 lg:gap-8">
+          <div className="-mx-4 mt-8 flex items-center gap-6 overflow-x-auto border-t border-zinc-200 px-4 pt-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mx-0 sm:px-0 lg:mt-10 lg:gap-8">
             {CATEGORIES.map((category) => {
               const isSelected = selectedCategory === category;
               return (
@@ -357,7 +425,8 @@ export function GalleryView({
                   key={category}
                   type="button"
                   onClick={() => setSelectedCategory(category)}
-                  className={`relative pb-1 text-[0.7rem] font-medium tracking-wide uppercase transition-colors duration-200 ${
+                  aria-pressed={isSelected}
+                  className={`relative shrink-0 pb-1 text-[0.7rem] font-medium tracking-wide uppercase transition-colors duration-200 ${
                     isSelected
                       ? "text-zinc-900"
                       : "text-zinc-400 hover:text-zinc-600"
@@ -379,13 +448,24 @@ export function GalleryView({
         <section className="relative">
           <div
             onClick={() => setActiveItem(featuredItem)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setActiveItem(featuredItem);
+              }
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label={`Open ${featuredItem.title}`}
             className="group relative min-h-[50dvh] cursor-pointer overflow-hidden bg-zinc-900 sm:min-h-[60dvh] lg:min-h-[75dvh]"
           >
             <Image
               src={featuredItem.imageSrc}
               alt={featuredItem.alt}
               fill
-              priority
+              preload
+              placeholder="blur"
+              blurDataURL={IMAGE_BLUR_DATA_URL}
               sizes="100vw"
               className="object-cover object-center transition-transform duration-[1.2s] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.03]"
             />
@@ -409,7 +489,7 @@ export function GalleryView({
             {/* Top-right hint */}
             <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
               <span className="text-[0.6rem] font-medium tracking-[0.2em] text-white/40 uppercase transition-colors duration-300 group-hover:text-white/70">
-                Click to inspect
+                Inspect photo
               </span>
             </div>
           </div>
@@ -419,7 +499,10 @@ export function GalleryView({
       {/* ── MASONRY GRID ── Preserved bento layout + inner-image parallax */}
       <section ref={containerRef} className="py-[2px]">
         <div className="mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[8rem] sm:auto-rows-[10rem] md:auto-rows-[12rem] lg:auto-rows-[14rem] grid-flow-row-dense gap-[2px]">
+          <div
+            key={selectedCategory}
+            className="gallery-filter-grid grid auto-rows-[8rem] grid-flow-row-dense grid-cols-2 gap-[2px] sm:auto-rows-[10rem] md:auto-rows-[12rem] md:grid-cols-3 lg:auto-rows-[14rem] lg:grid-cols-4"
+          >
             {filteredItems.map((item, index) => (
               <GalleryCard
                 key={item.id}
@@ -463,71 +546,16 @@ export function GalleryView({
         )}
       </div>
 
-      {/* ── LIGHTBOX MODAL ── Stark, minimal, full viewport */}
       {activeItem && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label={activeItem.title}
-          className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-sm"
-          onClick={() => setActiveItem(null)}
-          style={{ animation: "fadeIn 0.2s ease-out forwards" }}
-        >
-          {/* Top bar */}
-          <div
-            className="flex shrink-0 items-center justify-between px-6 py-4"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-4">
-              <span className="text-[0.6rem] font-medium tracking-[0.2em] text-white/40 uppercase">
-                {activeItem.category}
-              </span>
-              <span className="h-3 w-px bg-white/15" />
-              <span className="text-[0.65rem] text-white/40">
-                {activeItem.year}
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setActiveItem(null)}
-              className="flex h-9 w-9 items-center justify-center text-white/50 transition-colors hover:text-white"
-              aria-label="Close"
-            >
-              <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 stroke-current" strokeWidth="1.5">
-                <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
-              </svg>
-            </button>
-          </div>
-
-          {/* Image area */}
-          <div
-            className="relative flex-1"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Image
-              src={activeItem.imageSrc}
-              alt={activeItem.alt}
-              fill
-              unoptimized
-              priority
-              sizes="100vw"
-              className="object-contain"
-            />
-          </div>
-
-          {/* Bottom metadata */}
-          <div
-            className="shrink-0 border-t border-white/8 px-6 py-5 sm:px-10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-xl font-medium tracking-tight text-white sm:text-2xl">
-              {activeItem.title}
-            </h3>
-            <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-white/50">
-              {activeItem.caption}
-            </p>
-          </div>
-        </div>
+        <GalleryLightbox
+          key={activeItem.id}
+          item={activeItem}
+          position={activeIndex + 1}
+          total={filteredItems.length}
+          onClose={() => setActiveItem(null)}
+          onPrevious={() => showRelativeItem(-1)}
+          onNext={() => showRelativeItem(1)}
+        />
       )}
 
       {/* ── CONTRIBUTE MODAL ── Sharp panel, Rule 6 form patterns */}
@@ -703,6 +731,189 @@ export function GalleryView({
   );
 }
 
+function GalleryLightbox({
+  item,
+  position,
+  total,
+  onClose,
+  onPrevious,
+  onNext,
+}: {
+  item: GalleryItem;
+  position: number;
+  total: number;
+  onClose: () => void;
+  onPrevious: () => void;
+  onNext: () => void;
+}) {
+  const [zoom, setZoom] = useState(1);
+  const [zoomOrigin, setZoomOrigin] = useState("50% 50%");
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const pinchRef = useRef<{ distance: number; zoom: number } | null>(null);
+
+  const handleTouchStart = (event: ReactTouchEvent<HTMLDivElement>) => {
+    if (event.touches.length === 2) {
+      const rect = event.currentTarget.getBoundingClientRect();
+      const midpointX = (event.touches[0].clientX + event.touches[1].clientX) / 2;
+      const midpointY = (event.touches[0].clientY + event.touches[1].clientY) / 2;
+      setZoomOrigin(
+        `${((midpointX - rect.left) / rect.width) * 100}% ${
+          ((midpointY - rect.top) / rect.height) * 100
+        }%`,
+      );
+      pinchRef.current = { distance: touchDistance(event.touches), zoom };
+      touchStartRef.current = null;
+      return;
+    }
+
+    if (event.touches.length === 1 && zoom <= 1.02) {
+      touchStartRef.current = {
+        x: event.touches[0].clientX,
+        y: event.touches[0].clientY,
+      };
+    }
+  };
+
+  const handleTouchMove = (event: ReactTouchEvent<HTMLDivElement>) => {
+    if (event.touches.length !== 2 || !pinchRef.current) return;
+    event.preventDefault();
+    const nextZoom =
+      pinchRef.current.zoom *
+      (touchDistance(event.touches) / pinchRef.current.distance);
+    setZoom(Math.min(3, Math.max(1, nextZoom)));
+  };
+
+  const handleTouchEnd = (event: ReactTouchEvent<HTMLDivElement>) => {
+    if (event.touches.length > 0) return;
+
+    if (pinchRef.current) {
+      pinchRef.current = null;
+      touchStartRef.current = null;
+      if (zoom < 1.05) setZoom(1);
+      return;
+    }
+
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!start || zoom > 1.02 || !event.changedTouches[0]) return;
+
+    const deltaX = event.changedTouches[0].clientX - start.x;
+    const deltaY = event.changedTouches[0].clientY - start.y;
+    if (Math.abs(deltaX) < 48 || Math.abs(deltaX) < Math.abs(deltaY) * 1.2) return;
+    if (deltaX < 0) onNext();
+    else onPrevious();
+  };
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={item.title}
+      className="fixed inset-0 z-50 flex flex-col bg-black/95 backdrop-blur-sm"
+      onClick={onClose}
+      style={{ animation: "fadeIn 0.2s ease-out forwards" }}
+    >
+      <div
+        className="flex shrink-0 items-center justify-between px-4 py-3 sm:px-6 sm:py-4"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <span className="truncate text-[0.6rem] font-medium tracking-[0.2em] text-white/40 uppercase">
+            {item.category}
+          </span>
+          <span className="h-3 w-px shrink-0 bg-white/15" />
+          <span className="shrink-0 text-[0.65rem] text-white/40" aria-live="polite">
+            {position} / {total}
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-11 w-11 shrink-0 items-center justify-center text-white/60 transition-colors hover:text-white"
+          aria-label="Close"
+        >
+          <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 stroke-current" strokeWidth="1.5">
+            <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      <div
+        className="relative min-h-0 flex-1 overflow-hidden"
+        onClick={(event) => event.stopPropagation()}
+        onDoubleClick={(event) => {
+          const rect = event.currentTarget.getBoundingClientRect();
+          setZoomOrigin(
+            `${((event.clientX - rect.left) / rect.width) * 100}% ${
+              ((event.clientY - rect.top) / rect.height) * 100
+            }%`,
+          );
+          setZoom((currentZoom) => (currentZoom > 1 ? 1 : 2));
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        style={{ touchAction: "none" }}
+      >
+        <div
+          className="absolute inset-0"
+          style={{ transform: `scale(${zoom})`, transformOrigin: zoomOrigin }}
+        >
+          <Image
+            key={item.id}
+            src={item.imageSrc}
+            alt={item.alt}
+            fill
+            loading="eager"
+            placeholder="blur"
+            blurDataURL={IMAGE_BLUR_DATA_URL}
+            sizes="100vw"
+            draggable={false}
+            className="object-contain select-none"
+          />
+        </div>
+
+        {total > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={onPrevious}
+              className="absolute top-1/2 left-2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-black/35 text-white/70 backdrop-blur-sm transition-colors hover:bg-black/60 hover:text-white sm:left-5"
+              aria-label="Previous photo"
+            >
+              <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 stroke-current" strokeWidth="1.6">
+                <path d="m12.5 4-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={onNext}
+              className="absolute top-1/2 right-2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center bg-black/35 text-white/70 backdrop-blur-sm transition-colors hover:bg-black/60 hover:text-white sm:right-5"
+              aria-label="Next photo"
+            >
+              <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 stroke-current" strokeWidth="1.6">
+                <path d="m7.5 4 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </>
+        )}
+      </div>
+
+      <div
+        className="max-h-[32dvh] shrink-0 overflow-y-auto border-t border-white/8 px-4 py-4 sm:px-10 sm:py-5"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h3 className="text-lg font-medium tracking-tight text-white sm:text-2xl">
+          {item.title}
+        </h3>
+        <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-white/50">
+          {item.caption}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /* ── GALLERY CARD ── Preserved parallax internals + stagger reveal */
 function GalleryCard({
   item,
@@ -716,29 +927,36 @@ function GalleryCard({
   index: number;
 }) {
   return (
-    <article
+    <button
+      type="button"
       onClick={onClick}
-      className={`group relative cursor-pointer overflow-hidden w-full h-full ${className || ""}`}
+      aria-label={`Open ${item.title}`}
+      className={`gallery-card group relative h-full w-full cursor-pointer overflow-hidden text-left ${className || ""}`}
+      data-gallery-card
+      data-revealed="false"
       style={{
-        animation: `galleryReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) both`,
-        animationDelay: `${index * 80}ms`,
-      }}
+        "--reveal-delay": `${(index % 6) * 45}ms`,
+        contain: "layout paint",
+        contentVisibility: "auto",
+        containIntrinsicSize: "16rem",
+      } as CSSProperties}
     >
-      <div className="relative w-full h-full overflow-hidden bg-zinc-200" data-parallax-item>
+      <div className="relative h-full w-full overflow-hidden bg-zinc-200" data-parallax-item>
         <div className="absolute -inset-[20%] h-[140%] w-[140%] will-change-transform" data-parallax-img>
           <Image
             src={item.imageSrc}
             alt={item.alt}
             fill
-            unoptimized
+            loading="lazy"
+            placeholder="blur"
+            blurDataURL={IMAGE_BLUR_DATA_URL}
+            decoding="async"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            className="object-cover object-center transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-110"
+            className="gallery-card-photo object-cover object-center"
           />
         </div>
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-black/0 transition-colors duration-500 group-hover:bg-black/30 z-10" />
-        {/* Title on hover */}
-        <div className="absolute inset-x-0 bottom-0 z-20 p-4 sm:p-5 translate-y-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+        <div className="gallery-card-overlay absolute inset-0 z-10" />
+        <div className="gallery-card-meta absolute inset-x-0 bottom-0 z-20 p-3 sm:p-5">
           <span className="text-[0.65rem] font-medium tracking-[0.15em] text-white/60 uppercase">
             {item.tag}
           </span>
@@ -747,6 +965,6 @@ function GalleryCard({
           </p>
         </div>
       </div>
-    </article>
+    </button>
   );
 }
