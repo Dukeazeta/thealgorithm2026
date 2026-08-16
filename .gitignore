@@ -30,6 +30,7 @@
 # misc
 .DS_Store
 *.pem
+GATES.md
 
 # debug
 npm-debug.log*

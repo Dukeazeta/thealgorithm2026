@@ -18,7 +18,7 @@ export default async function GalleryPage() {
     <div className="min-h-svh bg-white">
       <SiteHeader />
       <main id="main-content">
-        <GalleryView items={gallery.data} />
+        <GalleryView items={gallery.data} nextOffset={gallery.nextOffset} />
       </main>
       <SiteFooter />
     </div>

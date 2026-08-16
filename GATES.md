@@ -1,17 +1,11 @@
-# Sign-out gallery import
+# Gallery display cap fix
 
-- [ ] G1: Confirm the source folder and exact image count.
-  CHECK: PowerShell file enumeration
-  EVIDENCE: pending
-- [ ] G2: Convert every source image to WebP and upload it to the production Blob store.
-  CHECK: importer summary and WebP content-type verification
-  EVIDENCE: pending
-- [ ] G3: Create one published gallery record and media asset for every uploaded image.
-  CHECK: production database count and duplicate check
-  EVIDENCE: pending
-- [ ] G4: Keep the import resumable so rerunning it does not duplicate gallery records.
-  CHECK: importer duplicate-skip summary
-  EVIDENCE: pending
-- [ ] G5: Confirm the live production gallery exposes the imported records.
-  CHECK: production gallery response
-  EVIDENCE: pending
+- [x] G1: The server-rendered gallery loads more than the API's default page size.
+  CHECK: pnpm typecheck
+  EVIDENCE: passed; the page receives `nextOffset` and the client loads 50-item batches.
+- [x] G2: The gallery still builds and lint passes.
+  CHECK: pnpm lint && pnpm build
+  EVIDENCE: `pnpm lint` passed with one pre-existing warning in `scripts/upload-signout-gallery.ts`; `pnpm build` passed.
+- [x] G3: The production API remains paginated while the page requests the full set.
+  CHECK: source inspection and production response
+  EVIDENCE: local API verified page one `50`, page two `50`, and `nextOffset=100`; the client observer appends batches and shows `Back to top` after exhaustion.

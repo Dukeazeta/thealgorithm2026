@@ -109,13 +109,25 @@ const GALLERY_ITEMS: GalleryItem[] = [
 
 const CATEGORIES = ["All", "Class", "Campus", "Labs", "Celebrations"] as const;
 
-export function GalleryView({ items = GALLERY_ITEMS }: { items?: GalleryItem[] }) {
+export function GalleryView({
+  items = GALLERY_ITEMS,
+  nextOffset: initialNextOffset = null,
+}: {
+  items?: GalleryItem[];
+  nextOffset?: number | null;
+}) {
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [activeItem, setActiveItem] = useState<GalleryItem | null>(null);
+  const [loadedItems, setLoadedItems] = useState(items);
+  const [nextOffset, setNextOffset] = useState<number | null>(initialNextOffset);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
   const [submissionError, setSubmissionError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const loadingMoreRef = useRef(false);
 
   // Keyboard accessibility
   useEffect(() => {
@@ -138,6 +150,54 @@ export function GalleryView({ items = GALLERY_ITEMS }: { items?: GalleryItem[] }
     }
     return () => { document.body.style.overflow = ""; };
   }, [activeItem, isSubmitModalOpen]);
+
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel || nextOffset === null || loadError) return;
+
+    let cancelled = false;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting || loadingMoreRef.current || nextOffset === null) return;
+
+        loadingMoreRef.current = true;
+        setIsLoadingMore(true);
+
+        void fetch(`/api/gallery?limit=50&offset=${nextOffset}`, { cache: "no-store" })
+          .then(async (response) => {
+            if (!response.ok) throw new Error("Could not load more photos.");
+            return (await response.json()) as {
+              data?: GalleryItem[];
+              nextOffset?: number | null;
+            };
+          })
+          .then((payload) => {
+            if (cancelled) return;
+            const newItems = Array.isArray(payload.data) ? payload.data : [];
+            setLoadedItems((currentItems) => {
+              const knownIds = new Set(currentItems.map((item) => item.id));
+              return [...currentItems, ...newItems.filter((item) => !knownIds.has(item.id))];
+            });
+            setNextOffset(payload.nextOffset ?? null);
+            setLoadError("");
+          })
+          .catch(() => {
+            if (!cancelled) setLoadError("Could not load more photos.");
+          })
+          .finally(() => {
+            loadingMoreRef.current = false;
+            if (!cancelled) setIsLoadingMore(false);
+          });
+      },
+      { rootMargin: "800px 0px" },
+    );
+
+    observer.observe(sentinel);
+    return () => {
+      cancelled = true;
+      observer.disconnect();
+    };
+  }, [loadError, nextOffset]);
 
   // Deterministic pseudo-random grid sizing based on item id/index
   // Produces an organic, varied layout with emphasis on tall vertical cells
@@ -174,7 +234,7 @@ export function GalleryView({ items = GALLERY_ITEMS }: { items?: GalleryItem[] }
 
   const containerRef = useRef<HTMLElement>(null);
 
-  const galleryItems = items;
+  const galleryItems = loadedItems;
   const filteredItems =
     selectedCategory === "All"
       ? galleryItems
@@ -266,7 +326,9 @@ export function GalleryView({ items = GALLERY_ITEMS }: { items?: GalleryItem[] }
                   Class of 2026
                 </p>
                 <p className="mt-1 text-sm tabular-nums text-zinc-500">
-                  {galleryItems.length} memories archived
+                  {nextOffset === null
+                    ? `${galleryItems.length} memories archived`
+                    : `${galleryItems.length} memories loaded`}
                 </p>
               </div>
 
@@ -370,6 +432,36 @@ export function GalleryView({ items = GALLERY_ITEMS }: { items?: GalleryItem[] }
           </div>
         </div>
       </section>
+
+      <div className="flex min-h-24 flex-col items-center justify-center gap-4 px-6 py-10">
+        {nextOffset !== null && <div ref={loadMoreRef} className="h-px w-full" aria-hidden="true" />}
+        {isLoadingMore && (
+          <p className="text-[0.65rem] font-medium tracking-[0.2em] text-zinc-400 uppercase">
+            Loading more photos
+          </p>
+        )}
+        {loadError && (
+          <button
+            type="button"
+            onClick={() => setLoadError("")}
+            className="border border-zinc-300 px-4 py-2 text-[0.65rem] font-semibold tracking-wide text-zinc-600 uppercase transition-colors hover:border-zinc-900 hover:text-zinc-900"
+          >
+            Try again
+          </button>
+        )}
+        {nextOffset === null && (
+          <button
+            type="button"
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="inline-flex items-center gap-2 border border-zinc-900 px-5 py-3 text-[0.65rem] font-semibold tracking-wide text-zinc-900 uppercase transition-colors hover:bg-zinc-900 hover:text-white"
+          >
+            <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 stroke-current" strokeWidth="1.8" aria-hidden="true">
+              <path d="M8 13V3M4 7l4-4 4 4" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Back to top
+          </button>
+        )}
+      </div>
 
       {/* ── LIGHTBOX MODAL ── Stark, minimal, full viewport */}
       {activeItem && (
