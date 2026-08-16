@@ -952,7 +952,6 @@ function GalleryCard({
             className="gallery-card-photo object-cover object-center"
           />
         </div>
-        <div className="gallery-card-overlay absolute inset-0 z-10" />
         <div className="gallery-card-meta absolute inset-x-0 bottom-0 z-20 p-3 sm:p-5">
           <span className="text-[0.65rem] font-medium tracking-[0.15em] text-white/60 uppercase">
             {item.tag}

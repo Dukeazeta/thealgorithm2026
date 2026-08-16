@@ -128,10 +128,6 @@ body {
   animation: galleryFilter 240ms ease-out both;
 }
 
-.gallery-card-overlay {
-  background: linear-gradient(to top, rgb(0 0 0 / 0.68), transparent 62%);
-}
-
 .gallery-card-meta {
   opacity: 1;
   transform: translateY(0);
@@ -153,22 +149,12 @@ body {
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .gallery-card-overlay {
-    background: transparent;
-    transition: background-color 300ms ease;
-  }
-
   .gallery-card-meta {
     opacity: 0;
     transform: translateY(8px);
     transition:
       opacity 220ms ease,
       transform 220ms ease;
-  }
-
-  .gallery-card:hover .gallery-card-overlay,
-  .gallery-card:focus-visible .gallery-card-overlay {
-    background: rgb(0 0 0 / 0.34);
   }
 
   .gallery-card:hover .gallery-card-meta,
@@ -188,10 +174,6 @@ body {
   .gallery-featured-hint,
   .gallery-card-meta {
     display: none;
-  }
-
-  .gallery-card-overlay {
-    background: linear-gradient(to top, rgb(0 0 0 / 0.68), transparent 62%);
   }
 }
 
