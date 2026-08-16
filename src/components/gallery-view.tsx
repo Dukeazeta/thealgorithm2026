@@ -205,9 +205,9 @@ export function GalleryView({ items = GALLERY_ITEMS }: { items?: GalleryItem[] }
 
           gsap.fromTo(
             imgWrapper,
-            { yPercent: -15 },
+            { yPercent: -25 },
             {
-              yPercent: 15,
+              yPercent: 25,
               ease: "none",
               scrollTrigger: {
                 trigger: item,
