@@ -477,9 +477,6 @@ export function GalleryView({
                 <p className="text-[0.6rem] font-medium tracking-[0.25em] text-white/50 uppercase">
                   {featuredItem.location}
                 </p>
-                <h2 className="mt-3 max-w-3xl text-3xl font-medium tracking-tighter leading-none text-white md:text-5xl lg:text-6xl">
-                  {featuredItem.title}
-                </h2>
                 <p className="mt-4 max-w-[55ch] text-sm leading-relaxed text-white/70">
                   {featuredItem.caption}
                 </p>
@@ -960,9 +957,6 @@ function GalleryCard({
           <span className="text-[0.65rem] font-medium tracking-[0.15em] text-white/60 uppercase">
             {item.tag}
           </span>
-          <p className="mt-1 text-sm font-medium leading-snug tracking-tight text-white">
-            {item.title}
-          </p>
         </div>
       </div>
     </button>
