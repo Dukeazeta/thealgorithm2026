@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 
 type GalleryItem = {
   id: string;
+  slug?: string;
   title: string;
   category: "Class" | "Campus" | "Labs" | "Celebrations";
   year: string;
@@ -14,6 +15,8 @@ type GalleryItem = {
   caption: string;
   tag: string;
   featured?: boolean;
+  status?: string;
+  sortOrder?: number;
 };
 
 const GALLERY_ITEMS: GalleryItem[] = [
@@ -136,24 +139,37 @@ export function GalleryView({ items = GALLERY_ITEMS }: { items?: GalleryItem[] }
     return () => { document.body.style.overflow = ""; };
   }, [activeItem, isSubmitModalOpen]);
 
-  function getGridClasses(index: number) {
-    const pattern = [
-      // 0: Large square on mobile | Large square on desktop
-      "col-span-2 row-span-2 md:col-span-2 md:row-span-2",
-      // 1: Vertical rectangle on mobile | Small square on desktop
-      "col-span-1 row-span-2 md:col-span-1 md:row-span-1",
-      // 2: Small square on mobile | Vertical rectangle on desktop
-      "col-span-1 row-span-1 md:col-span-1 md:row-span-2",
-      // 3: Small square on mobile | Small square on desktop
-      "col-span-1 row-span-1 md:col-span-1 md:row-span-1",
-      // 4: Horizontal rectangle on mobile | Wide rectangle on desktop
-      "col-span-2 row-span-1 md:col-span-2 md:row-span-1",
-      // 5: Small square on mobile | Small square on desktop
-      "col-span-1 row-span-1 md:col-span-1 md:row-span-1",
-      // 6: Vertical rectangle on mobile | Small square on desktop
-      "col-span-1 row-span-2 md:col-span-1 md:row-span-1",
-    ];
-    return pattern[index % pattern.length];
+  // Deterministic pseudo-random grid sizing based on item id/index
+  // Produces an organic, varied layout with emphasis on tall vertical cells
+  function getGridClasses(index: number, id: string) {
+    // Simple hash from id string for deterministic randomness
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+      hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
+    }
+    const bucket = Math.abs(hash + index * 7) % 100;
+
+    // Distribution:
+    // ~12% large 2x2 blocks (hero anchors)
+    // ~28% tall vertical 1x3 or 1x2 (the "random tall" feel)
+    // ~15% wide horizontal 2x1 strips
+    // ~45% standard 1x1 cells (breathing room)
+    if (bucket < 12) {
+      // Large square
+      return "col-span-2 row-span-2";
+    } else if (bucket < 25) {
+      // Tall vertical (3 rows)
+      return "col-span-1 row-span-3";
+    } else if (bucket < 40) {
+      // Tall vertical (2 rows)
+      return "col-span-1 row-span-2";
+    } else if (bucket < 55) {
+      // Wide horizontal
+      return "col-span-2 row-span-1";
+    } else {
+      // Standard cell
+      return "col-span-1 row-span-1";
+    }
   }
 
   const containerRef = useRef<HTMLElement>(null);
@@ -341,13 +357,13 @@ export function GalleryView({ items = GALLERY_ITEMS }: { items?: GalleryItem[] }
       {/* ── MASONRY GRID ── Preserved bento layout + inner-image parallax */}
       <section ref={containerRef} className="py-[2px]">
         <div className="mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[10rem] sm:auto-rows-[12rem] md:auto-rows-[16rem] lg:auto-rows-[20rem] grid-flow-row-dense gap-[2px]">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[8rem] sm:auto-rows-[10rem] md:auto-rows-[12rem] lg:auto-rows-[14rem] grid-flow-row-dense gap-[2px]">
             {filteredItems.map((item, index) => (
               <GalleryCard
                 key={item.id}
                 item={item}
                 index={index}
-                className={getGridClasses(index)}
+                className={getGridClasses(index, item.id)}
                 onClick={() => setActiveItem(item)}
               />
             ))}
@@ -622,6 +638,7 @@ function GalleryCard({
             src={item.imageSrc}
             alt={item.alt}
             fill
+            unoptimized
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover object-center transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-110"
           />
