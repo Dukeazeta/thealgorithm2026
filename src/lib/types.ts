@@ -26,6 +26,11 @@ export type GraduateProfile = {
   sortOrder?: number;
 };
 
+export type GraduateExtraction = Omit<
+  GraduateProfile,
+  "id" | "imageSrc" | "status" | "sortOrder"
+>;
+
 export type GalleryItem = {
   id: string;
   slug: string;

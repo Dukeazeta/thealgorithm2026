@@ -37,7 +37,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Backend setup
 
-The archive backend uses Turso/libSQL through Drizzle and Vercel Blob for images.
+The archive backend uses Turso/libSQL through Drizzle and Vercel Blob for images. Graduate image import uses browser-based Tesseract.js OCR to read visible profile details into the admin form for review.
 
 1. Copy `.env.example` to `.env.local` and fill in the Turso URL, Turso token, session secret, and Blob token.
 2. Generate and apply the schema migrations:

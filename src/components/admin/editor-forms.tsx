@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
   saveGalleryAction,
   saveGraduateAction,
@@ -8,6 +8,8 @@ import {
   saveStoryMemoryAction,
   saveStoryStatAction,
 } from "@/app/admin/actions";
+import { extractGraduateProfile } from "@/lib/graduate-ocr";
+import type { GraduateExtraction } from "@/lib/types";
 
 function Field({ label, name, type = "text", placeholder, required = true, className = "" }: { label: string; name: string; type?: string; placeholder?: string; required?: boolean; className?: string; }) {
   return (
@@ -62,6 +64,63 @@ export function MediaUploadField({ onChange }: { onChange: (id: string) => void 
   );
 }
 
+function GraduateImportField({
+  onComplete,
+}: {
+  onComplete: (profile: GraduateExtraction, mediaAssetId: string) => void;
+}) {
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState("No profile image selected");
+
+  async function importImage(file: File) {
+    setPending(true);
+    setMessage("Reading image locally...");
+
+    try {
+      const { createWorker } = await import("tesseract.js");
+      const worker = await createWorker("eng");
+      let text = "";
+      try {
+        const result = await worker.recognize(file);
+        text = result.data.text;
+      } finally {
+        await worker.terminate();
+      }
+
+      const profile = extractGraduateProfile(text);
+      if (!profile.name) throw new Error("No graduate name was found in this image.");
+
+      setMessage("Uploading portrait...");
+      const formData = new FormData();
+      formData.set("file", file);
+      const response = await fetch("/api/admin/media", { method: "POST", body: formData });
+      const body = (await response.json()) as { data?: { id: string }; error?: string };
+      if (!response.ok || !body.data) throw new Error(body.error ?? "Portrait upload failed.");
+
+      onComplete(profile, body.data.id);
+      setMessage("Details imported. Review before saving.");
+    } catch (error: unknown) {
+      setMessage(error instanceof Error ? error.message : "Could not read this image.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-[0.65rem] font-bold tracking-[0.1em] text-white/40 uppercase">Import profile from image</span>
+      <div className="flex items-center justify-between border-b border-white/10 py-2">
+        <label className="flex cursor-pointer items-center gap-4">
+          <span className="border border-white/20 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/5">{pending ? "Reading..." : "Choose profile image"}</span>
+          <span className="text-xs text-white/30">JPEG, PNG, WebP (10MB max)</span>
+          <input type="file" accept="image/jpeg,image/png,image/webp" disabled={pending} className="sr-only" onChange={(event) => { const file = event.target.files?.[0]; if (file) importImage(file); }} />
+        </label>
+        <span className="text-xs font-medium text-white/60">{message}</span>
+      </div>
+    </div>
+  );
+}
+
 function SaveButton({ pending }: { pending: boolean }) {
   return (
     <button type="submit" disabled={pending} className="h-10 bg-white px-6 text-[0.65rem] font-bold tracking-[0.1em] uppercase text-black transition-transform hover:bg-white/90 active:scale-[0.98] disabled:opacity-50">
@@ -74,6 +133,25 @@ export function GraduateEditor() {
   const [pending, startTransition] = useTransition();
   const [message, setMessage] = useState("");
   const [mediaAssetId, setMediaAssetId] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  function applyExtractedProfile(profile: GraduateExtraction, extractedMediaAssetId: string) {
+    const form = formRef.current;
+    if (!form) return;
+
+    const values = {
+      ...profile,
+      departmentFriends: profile.departmentFriends.join(", "),
+    };
+    for (const [name, value] of Object.entries(values)) {
+      const field = form.elements.namedItem(name);
+      if (field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement || field instanceof HTMLSelectElement) {
+        field.value = value;
+      }
+    }
+
+    setMediaAssetId(extractedMediaAssetId);
+  }
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -92,12 +170,12 @@ export function GraduateEditor() {
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-10 bg-[#0b0d0d]">
+    <form ref={formRef} onSubmit={submit} className="flex flex-col gap-10 bg-[#0b0d0d]">
       
       {/* Identity Block */}
       <div className="flex flex-col gap-6 border border-white/5 bg-white/[0.02] p-6">
         <h3 className="mb-2 text-[0.65rem] font-bold tracking-[0.2em] text-white/20 uppercase">Identity</h3>
-        <MediaUploadField onChange={setMediaAssetId} />
+        <GraduateImportField onComplete={applyExtractedProfile} />
         <div className="grid gap-x-8 gap-y-6 sm:grid-cols-2">
           <Field label="Full name" name="name" />
           <Field label="Nickname" name="nickname" />
