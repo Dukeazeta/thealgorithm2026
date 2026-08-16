@@ -472,7 +472,7 @@ export function GalleryView({
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
             {/* Bottom-left metadata */}
-            <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10 lg:p-14">
+            <div className="gallery-featured-meta absolute inset-x-0 bottom-0 p-6 sm:p-10 lg:p-14">
               <div className="mx-auto max-w-[1400px]">
                 <p className="text-[0.6rem] font-medium tracking-[0.25em] text-white/50 uppercase">
                   {featuredItem.location}
@@ -484,7 +484,7 @@ export function GalleryView({
             </div>
 
             {/* Top-right hint */}
-            <div className="absolute top-6 right-6 sm:top-8 sm:right-8">
+            <div className="gallery-featured-hint absolute top-6 right-6 sm:top-8 sm:right-8">
               <span className="text-[0.6rem] font-medium tracking-[0.2em] text-white/40 uppercase transition-colors duration-300 group-hover:text-white/70">
                 Inspect photo
               </span>

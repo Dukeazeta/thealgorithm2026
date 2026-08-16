@@ -184,14 +184,14 @@ body {
 }
 
 @media (max-width: 767px) {
-  .gallery-card-overlay {
-    background: linear-gradient(to top, rgb(0 0 0 / 0.68), transparent 62%);
+  .gallery-featured-meta,
+  .gallery-featured-hint,
+  .gallery-card-meta {
+    display: none;
   }
 
-  .gallery-card-meta {
-    opacity: 1;
-    transform: translateY(0);
-    transition: none;
+  .gallery-card-overlay {
+    background: linear-gradient(to top, rgb(0 0 0 / 0.68), transparent 62%);
   }
 }
 
