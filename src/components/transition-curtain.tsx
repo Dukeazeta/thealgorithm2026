@@ -1,19 +1,34 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import { transitionStore } from "@/lib/transition";
 
 export function TransitionCurtain() {
+  const pathname = usePathname();
   const curtainRef = useRef<HTMLDivElement>(null);
   const initialContentRef = useRef<HTMLDivElement>(null);
   const routeContentRef = useRef<HTMLDivElement>(null);
   const countRef = useRef<HTMLSpanElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
+  const pendingNavigationRef = useRef<{
+    pathname: string;
+    timeline: gsap.core.Timeline;
+  } | null>(null);
 
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const isBusyRef = useRef(true);
+
+  useEffect(() => {
+    const pendingNavigation = pendingNavigationRef.current;
+
+    if (pendingNavigation && pathname !== pendingNavigation.pathname) {
+      pendingNavigationRef.current = null;
+      pendingNavigation.timeline.resume();
+    }
+  }, [pathname]);
 
   // 1. Initial 0 - 100% Loader (Runs on every page reload/mount)
   useEffect(() => {
@@ -124,11 +139,15 @@ export function TransitionCurtain() {
 
       // Execute route change when covered
       tl.add(() => {
+        pendingNavigationRef.current = {
+          pathname: window.location.pathname,
+          timeline: tl,
+        };
         onCovered();
       });
 
-      // Hold brief buffer (100ms) for Next.js route change render
-      tl.to({}, { duration: 0.12 });
+      // Wait until Next.js has committed the new route before revealing it.
+      tl.addPause();
 
       // Fade out route text
       if (routeContentRef.current) {
