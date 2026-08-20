@@ -1,6 +1,7 @@
 import type {
   ContentStatus,
   GalleryCategory,
+  SubmissionBatchStatus,
   SubmissionStatus,
 } from "@/db/schema";
 
@@ -89,6 +90,10 @@ export type StoryPayload = {
 
 export type MemorySubmission = {
   id: string;
+  batchId: string | null;
+  mediaAssetId: string | null;
+  ordinal: number | null;
+  sourceFileName: string | null;
   contributorName: string;
   category: GalleryCategory;
   title: string;
@@ -97,4 +102,16 @@ export type MemorySubmission = {
   status: SubmissionStatus;
   reviewNotes: string | null;
   createdAt: string;
+};
+
+export type SubmissionBatchQueue = {
+  id: string;
+  status: SubmissionBatchStatus | "legacy";
+  contributorName: string;
+  category: GalleryCategory;
+  title: string;
+  caption: string;
+  expectedCount: number;
+  createdAt: string;
+  items: MemorySubmission[];
 };

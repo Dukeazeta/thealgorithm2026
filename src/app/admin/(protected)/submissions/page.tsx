@@ -1,117 +1,75 @@
-import { reviewSubmissionAction } from "@/app/admin/actions";
-import { listPendingSubmissions } from "@/lib/content";
+import { reviewSubmissionBatchAction } from "@/app/admin/actions";
+import { listPendingSubmissionBatches } from "@/lib/content";
 
 export default async function AdminSubmissionsPage() {
-  const submissions = await listPendingSubmissions();
+  const batches = await listPendingSubmissionBatches();
 
   return (
-    <main className="w-full max-w-full overflow-x-hidden bg-[#0b0d0d] text-white">
-      {/* Hero Section */}
-      <section className="border-b border-white/5 px-6 py-16 sm:px-10 sm:py-24 lg:px-16 lg:py-32">
+    <main className="min-h-screen w-full overflow-x-hidden bg-[#0b0d0d] text-white">
+      <section className="border-b border-white/5 px-5 py-14 sm:px-10 sm:py-20 lg:px-16 lg:py-24">
         <div className="mx-auto max-w-[96rem]">
-          <div className="grid gap-8 lg:grid-cols-12 lg:items-end">
-            <div className="lg:col-span-8">
-              <div className="mb-4 flex items-center gap-2 text-[0.65rem] font-semibold tracking-[0.2em] text-white/30 uppercase">
-                <span className="h-1.5 w-1.5 bg-white/40" />
-                Editorial queue
-              </div>
-              <h1 className="mt-5 max-w-6xl text-[clamp(2.5rem,5vw,5rem)] leading-[0.95] font-medium tracking-tighter text-white">
-                Memories looking for a home.
-              </h1>
-            </div>
-            <p className="max-w-md text-sm leading-relaxed text-white/40 lg:col-span-4 lg:pb-2">
-              Review each contribution with its context intact. Approving an image-backed memory publishes it to the gallery.
-            </p>
+          <p className="text-[0.65rem] font-semibold tracking-[0.2em] text-white/30 uppercase">Editorial queue · {batches.length} batches</p>
+          <div className="mt-5 grid gap-6 lg:grid-cols-12 lg:items-end">
+            <h1 className="max-w-5xl text-[clamp(2.5rem,5vw,5rem)] leading-[0.95] font-medium tracking-tighter lg:col-span-8">Memories looking for a home.</h1>
+            <p className="max-w-md text-sm leading-6 text-white/40 lg:col-span-4">Each contributor batch stays together. Uncheck any frame you want to leave for a later review.</p>
           </div>
         </div>
       </section>
 
-      {/* Queue Section */}
-      <section className="px-6 py-16 sm:px-10 lg:px-16">
-        <div className="mx-auto max-w-[96rem]">
-          
-          {submissions.length === 0 ? (
-            <div className="border border-dashed border-white/10 bg-[#101212] px-6 py-32 text-center">
-              <p className="text-2xl font-medium tracking-tight text-white">The queue is clear.</p>
-              <p className="mt-3 text-sm text-white/40">New public memories will appear here when they arrive.</p>
+      <section className="px-4 py-10 sm:px-10 sm:py-14 lg:px-16">
+        <div className="mx-auto max-w-[96rem] space-y-8">
+          {batches.length === 0 ? (
+            <div className="border border-dashed border-white/10 bg-[#101212] px-6 py-28 text-center">
+              <p className="text-2xl font-medium tracking-tight">The queue is clear.</p>
+              <p className="mt-3 text-sm text-white/40">New public photo batches will appear here when they arrive.</p>
             </div>
-          ) : (
-            <div className="grid gap-px bg-white/5 md:grid-cols-2 lg:grid-cols-2">
-              {submissions.map((submission) => (
-                <article key={submission.id} className="flex flex-col bg-[#0b0d0d]">
-                  
-                  {/* Media Block (Sharp, no rounded corners) */}
-                  <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-[#101212]">
-                    {submission.imageSrc ? (
-                      <div 
-                        className="absolute inset-0 bg-cover bg-center grayscale transition-transform duration-1000 hover:scale-105 hover:grayscale-0" 
-                        style={{ backgroundImage: `url(${submission.imageSrc})` }} 
-                        aria-label={submission.title} 
-                        role="img" 
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center p-8 text-center text-xs uppercase tracking-wide text-white/30">
-                        Text-only memory
+          ) : batches.map((batch) => {
+            const readyItems = batch.items.filter((item) => item.status === "pending" && item.imageSrc);
+            const isReady = batch.status === "pending" || batch.status === "legacy";
+            return (
+              <article key={batch.id} className="border border-white/10 bg-[#101212]">
+                <header className="grid gap-5 border-b border-white/10 p-5 sm:p-7 lg:grid-cols-[1fr_auto] lg:items-end">
+                  <div>
+                    <div className="flex flex-wrap gap-x-5 gap-y-2 text-[0.62rem] font-bold tracking-[0.16em] text-white/35 uppercase">
+                      <span>{batch.category}</span>
+                      <span>{new Date(batch.createdAt).toLocaleDateString()}</span>
+                      <span>{readyItems.length} of {batch.expectedCount} uploaded</span>
+                      <span className={isReady ? "text-emerald-300/70" : "text-amber-300/70"}>{batch.status}</span>
+                    </div>
+                    <h2 className="mt-4 text-2xl font-medium tracking-tight sm:text-3xl">{batch.title}</h2>
+                    {batch.caption && <p className="mt-3 max-w-3xl text-sm leading-6 text-white/55">{batch.caption}</p>}
+                    <p className="mt-4 text-[0.68rem] tracking-wide text-white/30 uppercase">Submitted by {batch.contributorName}</p>
+                  </div>
+                  {!isReady && <p className="max-w-xs border border-amber-200/10 bg-amber-100/5 px-4 py-3 text-xs leading-5 text-amber-100/60">Uploads are still in progress. Review actions unlock when the batch is complete.</p>}
+                </header>
+
+                <form action={reviewSubmissionBatchAction}>
+                  <div className="grid grid-cols-2 gap-px bg-white/5 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+                    {batch.items.map((item) => (
+                      <label key={item.id} className={`group relative aspect-[4/3] overflow-hidden bg-[#0b0d0d] ${item.status !== "pending" ? "pointer-events-none opacity-35" : "cursor-pointer"}`}>
+                        {item.imageSrc ? <div role="img" aria-label={`${item.title}, photo ${item.ordinal ?? 1}`} className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-[1.03]" style={{ backgroundImage: `linear-gradient(to top, rgba(0,0,0,.6), transparent 45%), url(${item.imageSrc})` }} /> : <div className="absolute inset-0 flex items-center justify-center p-4 text-center text-[0.6rem] font-bold tracking-wide text-white/30 uppercase">Awaiting upload</div>}
+                        {item.status === "pending" && <input type="checkbox" name="submissionIds" value={item.id} defaultChecked className="absolute top-3 right-3 h-5 w-5 accent-white" aria-label={`Select ${item.sourceFileName ?? item.title}`} />}
+                        <span className="absolute inset-x-3 bottom-3 truncate text-[0.62rem] text-white/70">{item.sourceFileName ?? `Photo ${item.ordinal ?? 1}`}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {isReady && readyItems.length > 0 && (
+                    <footer className="grid gap-4 border-t border-white/10 p-5 sm:p-7 lg:grid-cols-[1fr_auto] lg:items-end">
+                      <label className="block max-w-2xl">
+                        <span className="text-[0.62rem] font-bold tracking-widest text-white/35 uppercase">Review notes (optional)</span>
+                        <textarea name="reviewNotes" rows={2} placeholder="Applied to the selected photos" className="mt-2 w-full border border-white/10 bg-transparent px-4 py-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-white/50" />
+                      </label>
+                      <div className="grid grid-cols-2 gap-2 sm:min-w-80">
+                        <button name="decision" value="approved" type="submit" className="min-h-12 bg-white px-5 text-[0.68rem] font-bold tracking-wide text-zinc-950 uppercase hover:bg-white/90">Approve selected</button>
+                        <button name="decision" value="rejected" type="submit" className="min-h-12 border border-white/15 px-5 text-[0.68rem] font-bold tracking-wide uppercase hover:border-red-400/50 hover:text-red-200">Reject selected</button>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Content & Action Block */}
-                  <div className="flex flex-1 flex-col p-8 lg:p-10">
-                    <div className="flex items-center justify-between gap-4 text-[0.65rem] font-bold tracking-[0.16em] text-white/40 uppercase">
-                      <span>{submission.category}</span>
-                      <span>{new Date(submission.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    
-                    <h2 className="mt-6 text-2xl font-medium tracking-tight text-white">
-                      {submission.title}
-                    </h2>
-                    <p className="mt-4 text-sm leading-relaxed text-white/60">
-                      {submission.caption}
-                    </p>
-                    <p className="mt-8 text-[0.7rem] uppercase tracking-wide text-white/30">
-                      Submitted by {submission.contributorName}
-                    </p>
-
-                    <div className="mt-auto pt-8">
-                      <form action={reviewSubmissionAction} className="space-y-4 border-t border-white/10 pt-6">
-                        <input type="hidden" name="submissionId" value={submission.id} />
-                        
-                        <label className="flex flex-col gap-2">
-                          <span className="text-[0.65rem] font-bold tracking-widest text-white/40 uppercase">Review Notes</span>
-                          <textarea 
-                            name="reviewNotes" 
-                            rows={2} 
-                            placeholder="Optional editorial feedback" 
-                            className="w-full border border-white/10 bg-transparent px-4 py-3 text-sm text-white outline-none placeholder:text-white/20 focus:border-white" 
-                          />
-                        </label>
-                        
-                        <div className="flex gap-4">
-                          <button 
-                            name="decision" 
-                            value="approved" 
-                            type="submit" 
-                            className="h-11 flex-1 bg-white px-4 text-[0.7rem] font-bold tracking-wide text-zinc-900 uppercase transition-transform hover:bg-white/90 active:scale-[0.98]"
-                          >
-                            Approve
-                          </button>
-                          <button 
-                            name="decision" 
-                            value="rejected" 
-                            type="submit" 
-                            className="h-11 flex-1 border border-white/10 bg-transparent px-4 text-[0.7rem] font-bold tracking-wide text-white uppercase transition-colors hover:border-red-500/50 hover:text-red-300"
-                          >
-                            Reject
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
+                    </footer>
+                  )}
+                </form>
+              </article>
+            );
+          })}
         </div>
       </section>
     </main>

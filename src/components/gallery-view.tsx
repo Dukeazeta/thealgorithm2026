@@ -10,6 +10,7 @@ import {
   type CSSProperties,
   type TouchEvent as ReactTouchEvent,
 } from "react";
+import { GalleryContributionDialog } from "@/components/gallery-contribution-dialog";
 
 type GalleryItem = {
   id: string;
@@ -139,9 +140,7 @@ export function GalleryView({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadError, setLoadError] = useState("");
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [submissionSuccess, setSubmissionSuccess] = useState(false);
-  const [submissionError, setSubmissionError] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const contributeButtonRef = useRef<HTMLButtonElement>(null);
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const loadingMoreRef = useRef(false);
 
@@ -150,7 +149,6 @@ export function GalleryView({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setActiveItem(null);
-        setIsSubmitModalOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -401,11 +399,9 @@ export function GalleryView({
               </div>
 
               <button
+                ref={contributeButtonRef}
                 type="button"
-                onClick={() => {
-                  setIsSubmitModalOpen(true);
-                  setSubmissionSuccess(false);
-                }}
+                onClick={() => setIsSubmitModalOpen(true)}
                 className="inline-flex h-10 items-center gap-2 border border-zinc-900 px-5 text-[0.7rem] font-semibold tracking-wide text-zinc-900 uppercase transition-all duration-200 hover:bg-zinc-900 hover:text-white active:scale-[0.98] lg:mt-6"
               >
                 <svg viewBox="0 0 16 16" fill="none" className="h-3.5 w-3.5 stroke-current" strokeWidth="2">
@@ -477,9 +473,11 @@ export function GalleryView({
                 <p className="text-[0.6rem] font-medium tracking-[0.25em] text-white/50 uppercase">
                   {featuredItem.location}
                 </p>
-                <p className="mt-4 max-w-[55ch] text-sm leading-relaxed text-white/70">
-                  {featuredItem.caption}
-                </p>
+                {featuredItem.caption && (
+                  <p className="mt-4 max-w-[55ch] text-sm leading-relaxed text-white/70">
+                    {featuredItem.caption}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -555,175 +553,13 @@ export function GalleryView({
         />
       )}
 
-      {/* ── CONTRIBUTE MODAL ── Sharp panel, Rule 6 form patterns */}
-      {isSubmitModalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          aria-label="Contribute a Memory"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
-          onClick={() => setIsSubmitModalOpen(false)}
-          style={{ animation: "fadeIn 0.2s ease-out forwards" }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg bg-white p-8 shadow-2xl sm:p-10"
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-2xl font-medium tracking-tight text-zinc-900">
-                  Contribute a Memory
-                </h3>
-                <p className="mt-1 text-sm text-zinc-400">
-                  Add your photo or story to the Class of 2026 Archive.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsSubmitModalOpen(false)}
-                className="flex h-8 w-8 items-center justify-center text-zinc-400 transition-colors hover:text-zinc-900"
-              >
-                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4 stroke-current" strokeWidth="1.5">
-                  <path d="M5 5l10 10M15 5L5 15" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="mt-6 h-px bg-zinc-100" />
-
-            {submissionSuccess ? (
-              <div className="py-12 text-center">
-                <div className="mx-auto flex h-12 w-12 items-center justify-center bg-zinc-900 text-white">
-                  <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5 stroke-current stroke-2">
-                    <path d="m4 10 4 4 8-8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <h4 className="mt-5 text-lg font-medium tracking-tight text-zinc-900">
-                  Memory Received
-                </h4>
-                <p className="mt-2 text-sm text-zinc-400">
-                  Thank you for contributing to The Algorithm 2026 archive.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setIsSubmitModalOpen(false)}
-                  className="mt-8 inline-flex h-10 items-center justify-center bg-zinc-900 px-6 text-[0.7rem] font-semibold tracking-wide text-white uppercase transition-all duration-200 hover:bg-zinc-700 active:scale-[0.98]"
-                >
-                  Done
-                </button>
-              </div>
-            ) : (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  setSubmissionError("");
-                  setIsSubmitting(true);
-                  const form = e.currentTarget;
-                  void fetch("/api/submissions", {
-                    method: "POST",
-                    body: new FormData(form),
-                  })
-                    .then(async (response) => {
-                      const body = (await response.json()) as { error?: string };
-                      if (!response.ok) throw new Error(body.error ?? "Submission failed.");
-                      setSubmissionSuccess(true);
-                    })
-                    .catch((error: unknown) => {
-                      setSubmissionError(error instanceof Error ? error.message : "Submission failed.");
-                    })
-                    .finally(() => setIsSubmitting(false));
-                }}
-                className="mt-6 space-y-5"
-              >
-                {/* Name */}
-                <div className="space-y-1.5">
-                  <label className="block text-[0.7rem] font-semibold tracking-wide text-zinc-900 uppercase">
-                    Your Name
-                  </label>
-                  <input
-                    type="text"
-                    name="contributorName"
-                    required
-                    placeholder="e.g. Victor E. / CS '26"
-                    className="w-full border border-zinc-200 bg-transparent px-3.5 py-2.5 text-sm text-zinc-900 outline-none placeholder:text-zinc-300 transition-colors focus:border-zinc-900"
-                  />
-                </div>
-
-                {/* Category */}
-                <div className="space-y-1.5">
-                  <label className="block text-[0.7rem] font-semibold tracking-wide text-zinc-900 uppercase">
-                    Category
-                  </label>
-                  <select
-                    name="category"
-                    className="w-full border border-zinc-200 bg-white px-3.5 py-2.5 text-sm text-zinc-900 outline-none transition-colors focus:border-zinc-900"
-                  >
-                    <option value="Class">The Class & Friends</option>
-                    <option value="Labs">Classrooms & Labs</option>
-                    <option value="Campus">Campus Life & Landmarks</option>
-                    <option value="Celebrations">Dinners & Sign-Out</option>
-                  </select>
-                </div>
-
-                {/* Title + Caption */}
-                <div className="space-y-1.5">
-                  <label className="block text-[0.7rem] font-semibold tracking-wide text-zinc-900 uppercase">
-                    Memory Title
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    required
-                    placeholder="Give the memory a title"
-                    className="w-full border border-zinc-200 bg-transparent px-3.5 py-2.5 text-sm text-zinc-900 outline-none placeholder:text-zinc-300 transition-colors focus:border-zinc-900"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="block text-[0.7rem] font-semibold tracking-wide text-zinc-900 uppercase">
-                    Caption
-                  </label>
-                  <textarea
-                    name="caption"
-                    required
-                    rows={3}
-                    placeholder="Describe the moment..."
-                    className="w-full border border-zinc-200 bg-transparent px-3.5 py-2.5 text-sm text-zinc-900 outline-none placeholder:text-zinc-300 transition-colors resize-none focus:border-zinc-900"
-                  />
-                </div>
-
-                {/* Image upload */}
-                <div className="space-y-1.5">
-                  <label className="block text-[0.7rem] font-semibold tracking-wide text-zinc-900 uppercase">
-                    Image (optional)
-                  </label>
-                  <input
-                    name="image"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="block w-full border border-zinc-200 px-3.5 py-2.5 text-sm text-zinc-900 file:mr-3 file:border-0 file:bg-zinc-100 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-zinc-600"
-                  />
-                  <p className="text-[0.65rem] text-zinc-300">JPEG, PNG, or WebP up to 10 MB.</p>
-                </div>
-
-                {submissionError && (
-                  <p className="border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{submissionError}</p>
-                )}
-
-                <div className="pt-1">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex h-11 w-full items-center justify-center bg-zinc-900 text-[0.7rem] font-semibold tracking-wide text-white uppercase transition-all duration-200 hover:bg-zinc-700 active:scale-[0.98] disabled:opacity-50"
-                  >
-                    {isSubmitting ? "Sending memory..." : "Submit to Archive"}
-                  </button>
-                </div>
-              </form>
-            )}
-          </div>
-        </div>
-      )}
+      <GalleryContributionDialog
+        open={isSubmitModalOpen}
+        onClose={() => {
+          setIsSubmitModalOpen(false);
+          requestAnimationFrame(() => contributeButtonRef.current?.focus());
+        }}
+      />
     </div>
   );
 }
@@ -903,9 +739,11 @@ function GalleryLightbox({
         <h3 className="text-lg font-medium tracking-tight text-white sm:text-2xl">
           {item.title}
         </h3>
-        <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-white/50">
-          {item.caption}
-        </p>
+        {item.caption && (
+          <p className="mt-2 max-w-[65ch] text-sm leading-relaxed text-white/50">
+            {item.caption}
+          </p>
+        )}
       </div>
     </div>
   );

@@ -20,11 +20,11 @@ function Field({ label, name, type = "text", placeholder, required = true, class
   );
 }
 
-function TextArea({ label, name, placeholder, rows = 4, className = "" }: { label: string; name: string; placeholder?: string; rows?: number; className?: string; }) {
+function TextArea({ label, name, placeholder, rows = 4, required = true, className = "" }: { label: string; name: string; placeholder?: string; rows?: number; required?: boolean; className?: string; }) {
   return (
     <label className={`flex flex-col gap-1.5 ${className}`}>
       <span className="text-[0.65rem] font-bold tracking-[0.1em] text-white/40 uppercase">{label}</span>
-      <textarea name={name} rows={rows} required placeholder={placeholder} className="w-full border border-white/10 bg-transparent px-3 py-2 text-sm leading-6 text-white outline-none transition-colors placeholder:text-white/20 focus:border-white/50" />
+      <textarea name={name} rows={rows} required={required} placeholder={placeholder} className="w-full border border-white/10 bg-transparent px-3 py-2 text-sm leading-6 text-white outline-none transition-colors placeholder:text-white/20 focus:border-white/50" />
     </label>
   );
 }
@@ -263,7 +263,7 @@ export function GalleryEditor() {
             <span className="text-[0.65rem] font-bold tracking-[0.1em] text-white/40 uppercase">Feature this frame</span>
           </label>
         </div>
-        <TextArea label="Caption" name="caption" rows={4} />
+        <TextArea label="Caption (optional)" name="caption" rows={4} required={false} />
       </div>
 
       <div className="flex items-center justify-between border-t border-white/10 pt-6">

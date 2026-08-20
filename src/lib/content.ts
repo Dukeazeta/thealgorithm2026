@@ -1,10 +1,11 @@
-import { and, asc, count, desc, eq, like, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, like, or } from "drizzle-orm";
 import { getDatabase } from "@/db/client";
 import {
   galleryItems,
   graduates,
   mediaAssets,
   memorySubmissions,
+  submissionBatches,
   storyChapters,
   storyMemories,
   storyStats,
@@ -13,6 +14,7 @@ import type {
   GalleryItem,
   GraduateProfile,
   MemorySubmission,
+  SubmissionBatchQueue,
   StoryChapter,
   StoryMemory,
   StoryPayload,
@@ -229,25 +231,51 @@ export async function getDashboardSnapshot() {
   };
 }
 
-export async function listPendingSubmissions(): Promise<MemorySubmission[]> {
+export async function listPendingSubmissionBatches(): Promise<SubmissionBatchQueue[]> {
   const rows = await getDatabase()
-    .select({ submission: memorySubmissions, imageUrl: mediaAssets.blobUrl })
+    .select({ submission: memorySubmissions, batch: submissionBatches, imageUrl: mediaAssets.blobUrl })
     .from(memorySubmissions)
     .leftJoin(mediaAssets, eq(memorySubmissions.mediaAssetId, mediaAssets.id))
-    .where(eq(memorySubmissions.status, "pending"))
+    .leftJoin(submissionBatches, eq(memorySubmissions.batchId, submissionBatches.id))
+    .where(inArray(memorySubmissions.status, ["uploading", "pending"]))
     .orderBy(desc(memorySubmissions.createdAt));
 
-  return rows.map(({ submission, imageUrl }): MemorySubmission => ({
-    id: submission.id,
-    contributorName: submission.contributorName,
-    category: submission.category,
-    title: submission.title,
-    caption: submission.caption,
-    imageSrc: imageUrl,
-    status: submission.status,
-    reviewNotes: submission.reviewNotes,
-    createdAt: submission.createdAt,
-  }));
+  const groups = new Map<string, SubmissionBatchQueue>();
+  for (const { submission, batch, imageUrl } of rows) {
+    const key = submission.batchId ?? `legacy-${submission.id}`;
+    const item: MemorySubmission = {
+      id: submission.id,
+      batchId: submission.batchId,
+      mediaAssetId: submission.mediaAssetId,
+      ordinal: submission.ordinal,
+      sourceFileName: submission.sourceFileName,
+      contributorName: submission.contributorName,
+      category: submission.category,
+      title: submission.title,
+      caption: submission.caption,
+      imageSrc: imageUrl,
+      status: submission.status,
+      reviewNotes: submission.reviewNotes,
+      createdAt: submission.createdAt,
+    };
+    const existing = groups.get(key);
+    if (existing) {
+      existing.items.push(item);
+    } else {
+      groups.set(key, {
+        id: key,
+        status: batch?.status ?? "legacy",
+        contributorName: batch?.contributorName ?? submission.contributorName,
+        category: batch?.category ?? submission.category,
+        title: batch?.title ?? submission.title,
+        caption: batch?.caption ?? submission.caption,
+        expectedCount: batch?.expectedCount ?? 1,
+        createdAt: batch?.createdAt ?? submission.createdAt,
+        items: [item],
+      });
+    }
+  }
+  return Array.from(groups.values());
 }
 
 export async function listAllGraduates() {

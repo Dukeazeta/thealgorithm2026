@@ -9,7 +9,7 @@ const navLinks = [
   { href: "/", label: "The Class" },
   { href: "/graduates", label: "Graduates" },
   { href: "/gallery", label: "Gallery" },
-  { href: "/#acknowledgements", label: "Acknowledgements" },
+  { href: "/acknowledgements", label: "Acknowledgements" },
 ] as const;
 
 export function SiteHeader() {
@@ -108,9 +108,7 @@ export function SiteHeader() {
             const isActive =
               link.href === "/"
                 ? pathname === "/"
-                : link.href.startsWith("/#")
-                  ? false
-                  : pathname === link.href || pathname.startsWith(`${link.href}/`);
+                : pathname === link.href || pathname.startsWith(`${link.href}/`);
 
             return (
               <Link
@@ -188,9 +186,7 @@ export function SiteHeader() {
               const isActive =
                 link.href === "/"
                   ? pathname === "/"
-                  : link.href.startsWith("/#")
-                    ? false
-                    : pathname === link.href || pathname.startsWith(`${link.href}/`);
+                  : pathname === link.href || pathname.startsWith(`${link.href}/`);
 
               return (
                 <Link

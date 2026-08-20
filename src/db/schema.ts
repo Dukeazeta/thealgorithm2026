@@ -10,8 +10,21 @@ import {
 export const contentStatuses = ["draft", "published", "archived"] as const;
 export type ContentStatus = (typeof contentStatuses)[number];
 
-export const submissionStatuses = ["pending", "approved", "rejected"] as const;
+export const submissionStatuses = [
+  "uploading",
+  "pending",
+  "approved",
+  "rejected",
+] as const;
 export type SubmissionStatus = (typeof submissionStatuses)[number];
+
+export const submissionBatchStatuses = [
+  "uploading",
+  "pending",
+  "reviewed",
+  "abandoned",
+] as const;
+export type SubmissionBatchStatus = (typeof submissionBatchStatuses)[number];
 
 export const galleryCategories = [
   "Class",
@@ -203,10 +216,41 @@ export const storyStats = sqliteTable(
   (table) => [index("story_stats_status_order_idx").on(table.status, table.sortOrder)],
 );
 
+export const submissionBatches = sqliteTable(
+  "submission_batches",
+  {
+    id: text("id").primaryKey(),
+    contributorName: text("contributor_name").notNull(),
+    category: text("category").$type<GalleryCategory>().notNull(),
+    title: text("title").notNull(),
+    caption: text("caption").notNull().default(""),
+    expectedCount: integer("expected_count").notNull(),
+    editTokenHash: text("edit_token_hash").notNull(),
+    status: text("status")
+      .$type<SubmissionBatchStatus>()
+      .notNull()
+      .default("uploading"),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (table) => [
+    index("submission_batches_status_idx").on(table.status, table.createdAt),
+  ],
+);
+
 export const memorySubmissions = sqliteTable(
   "memory_submissions",
   {
     id: text("id").primaryKey(),
+    batchId: text("batch_id").references(() => submissionBatches.id, {
+      onDelete: "set null",
+    }),
+    clientFileId: text("client_file_id"),
+    sourceFileName: text("source_file_name"),
+    sourceMimeType: text("source_mime_type"),
+    sourceByteSize: integer("source_byte_size"),
+    sourceLastModified: integer("source_last_modified"),
+    ordinal: integer("ordinal"),
     contributorName: text("contributor_name").notNull(),
     category: text("category").$type<GalleryCategory>().notNull(),
     title: text("title").notNull(),
@@ -228,6 +272,7 @@ export const memorySubmissions = sqliteTable(
   },
   (table) => [
     index("memory_submissions_status_idx").on(table.status, table.createdAt),
+    index("memory_submissions_batch_idx").on(table.batchId, table.status),
   ],
 );
 

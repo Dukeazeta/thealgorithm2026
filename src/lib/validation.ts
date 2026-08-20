@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { galleryCategories } from "@/db/schema";
+import { optionalCaptionSchema } from "@/lib/contribution";
 
 export const galleryCategorySchema = z.enum(galleryCategories);
 
@@ -12,7 +13,7 @@ export const memorySubmissionSchema = z.object({
   contributorName: z.string().trim().min(2).max(80),
   category: galleryCategorySchema,
   title: z.string().trim().min(2).max(160),
-  caption: z.string().trim().min(10).max(5000),
+  caption: optionalCaptionSchema,
 });
 
 export const graduateSchema = z.object({
@@ -44,7 +45,7 @@ export const galleryItemSchema = z.object({
   location: z.string().trim().min(2).max(200),
   mediaAssetId: z.string().uuid(),
   alt: z.string().trim().min(2).max(240),
-  caption: z.string().trim().min(10).max(5000),
+  caption: optionalCaptionSchema,
   tag: z.string().trim().min(2).max(100),
   featured: z.boolean(),
   status: z.enum(["draft", "published", "archived"]),

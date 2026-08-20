@@ -37,13 +37,6 @@ const storyChapters = [
   },
 ] as const;
 
-const acknowledgementGroups = [
-  "Lecturers",
-  "Class representatives",
-  "Contributors",
-  "Families and friends",
-] as const;
-
 function ArrowIcon({ className = "" }: { className?: string }) {
   return (
     <svg
@@ -238,26 +231,7 @@ export function HomeSections() {
         ease: "none"
       });
 
-      // 6. Acknowledgements
-      gsap.from(".ack-heading", {
-        scrollTrigger: { trigger: ".ack-heading", start: "top 85%", toggleActions: "play reverse play reverse" },
-        y: 120,
-        opacity: 0,
-        skewY: 4,
-        duration: 1.5,
-        ease: "expo.out"
-      });
-      
-      gsap.from(".ack-group", {
-        scrollTrigger: { trigger: ".ack-lists", start: "top 85%", toggleActions: "play reverse play reverse" },
-        y: 30,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.1,
-        ease: "power3.out"
-      });
-
-      // 7. Closing
+      // 6. Closing
       gsap.from(".closing-content > *", {
         scrollTrigger: { trigger: ".closing-content", start: "top 85%", toggleActions: "play reverse play reverse" },
         y: 50,
@@ -436,7 +410,7 @@ export function HomeSections() {
 
           <div className="mt-12 flex justify-end border-t border-black/12 pt-5 sm:mt-16">
             <Link
-              href="#acknowledgements"
+              href="/acknowledgements"
               className="group inline-flex min-h-11 items-center gap-3 text-[0.72rem] font-medium tracking-[0.1em] uppercase"
             >
               The people who carried us
@@ -531,61 +505,6 @@ export function HomeSections() {
       </section>
 
       <section
-        id="acknowledgements"
-        aria-labelledby="acknowledgements-heading"
-        className="scroll-mt-6 bg-[#123f31] px-4 py-20 text-white sm:px-6 sm:py-28 lg:px-8 lg:py-36"
-      >
-        <div className="mx-auto max-w-[96rem]">
-          <div className="relative min-h-[44rem] overflow-hidden lg:min-h-[48rem]">
-            <div className="relative z-10 flex min-h-[calc(44rem-3rem)] flex-col lg:min-h-[calc(48rem-7rem)]">
-              <div className="flex items-start justify-between gap-5">
-                <p className="text-[0.65rem] font-medium tracking-[0.18em] text-white/68 uppercase">
-                  Acknowledgements
-                </p>
-                <Image
-                  src="/images/nacos-logo.jpg"
-                  alt="NACOS"
-                  width={56}
-                  height={56}
-                  className="h-12 w-12 rounded-full object-cover ring-1 ring-white/20 sm:h-14 sm:w-14"
-                />
-              </div>
-
-              <div className="my-auto py-16">
-                <h2
-                  id="acknowledgements-heading"
-                  className="ack-heading max-w-6xl font-display text-[clamp(3.25rem,1.3rem+8vw,10.5rem)] leading-[0.84] font-medium tracking-[-0.07em] text-balance"
-                >
-                  Nobody gets here alone.
-                </h2>
-              </div>
-
-              <div className="ack-lists grid gap-8 border-t border-white/18 pt-6 md:grid-cols-12">
-                <p className="ack-group max-w-lg text-sm leading-6 text-white/68 sm:text-base sm:leading-7 md:col-span-5">
-                  This yearbook makes room for the people whose teaching,
-                  patience, leadership, work, and belief helped the class reach
-                  this point.
-                </p>
-                <div className="grid grid-cols-2 gap-x-5 gap-y-3 md:col-span-6 md:col-start-7">
-                  {acknowledgementGroups.map((group, index) => (
-                    <p
-                      key={group}
-                      className="ack-group border-t border-white/14 pt-3 text-[0.72rem] font-medium tracking-[0.05em] text-white/76"
-                    >
-                      <span className="mr-2 text-white/34">
-                        0{index + 1}
-                      </span>
-                      {group}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section
         id="closing"
         aria-labelledby="closing-heading"
         className="bg-[#d3c3b2]"
@@ -653,16 +572,16 @@ const footerGroups = [
   {
     title: "Community",
     links: [
-      { href: "/#acknowledgements", label: "Lecturers" },
-      { href: "/#acknowledgements", label: "Class representatives" },
-      { href: "/#acknowledgements", label: "Contributors" },
+      { href: "/acknowledgements", label: "Lecturers" },
+      { href: "/acknowledgements", label: "Class representatives" },
+      { href: "/acknowledgements", label: "Contributors" },
     ],
   },
   {
     title: "The project",
     links: [
       { href: "/story", label: "About the archive" },
-      { href: "/#acknowledgements", label: "Acknowledgements" },
+      { href: "/acknowledgements", label: "Acknowledgements" },
       { href: "/gallery", label: "Contribute a memory" },
     ],
   },
